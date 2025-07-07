@@ -1,0 +1,4 @@
+*.json
+*.cjs
+jest.config.ts
+dist

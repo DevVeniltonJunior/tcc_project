@@ -1,0 +1,15 @@
+version: '3'
+services:
+  mysql:
+    image: tbd
+    container_name: tbd
+    environment:
+      MYSQL_ROOT_PASSWORD: tbd
+      MYSQL_DATABASE: tbd
+      MYSQL_USER: bd_user
+      MYSQL_PASSWORD: tbd
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+      - ./src/infra/config/db/init.sql:/docker-entrypoint-initdb.d/init.sql

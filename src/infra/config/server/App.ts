@@ -1,7 +1,7 @@
 import 'module-alias/register'
 import express from 'express'
 import { router } from './Router'
-
+import 'dotenv/config'
 
 const app = express()
 

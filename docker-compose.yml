@@ -1,15 +1,19 @@
-version: '3'
+version: '3.8'
+
 services:
-  mysql:
-    image: tbd
-    container_name: tbd
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: tbd
-      MYSQL_DATABASE: tbd
-      MYSQL_USER: bd_user
-      MYSQL_PASSWORD: tbd
+      POSTGRES_DB: financial_db
+      POSTGRES_USER: root269
+      POSTGRES_PASSWORD: sh4432__
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - ./data:/var/lib/mysql
+      - ./data:/var/lib/postgresql/data
       - ./src/infra/config/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:

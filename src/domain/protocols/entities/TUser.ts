@@ -1,4 +1,4 @@
-import { TPassword, TBill } from "@/domain/protocols";
+import { TPassword, TBill, TPlanning } from "@/domain/protocols";
 
 export namespace TUser {
   export type Entity = {
@@ -9,6 +9,7 @@ export namespace TUser {
     salary?: number,
     password: TPassword.Entity,
     bills: TBill.Entity[],
+    planning: TPlanning.Entity[],
     createdAt: Date | string,
     updatedAt?: Date | string,
     deletedAt?: Date | string,

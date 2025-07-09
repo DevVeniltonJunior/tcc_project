@@ -1,4 +1,4 @@
-export namespace TPlaning {
+export namespace TPlanning {
   export type Entity = {
     id: string,
     userId: string,

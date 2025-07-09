@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2024",
+    "target": "es2022",
     "module": "commonjs",                                /* Specify what module code is generated. */
     "rootDirs": ["src", "tests"], 
     "sourceMap": true,                                 /* Specify the root folder within your source files. */

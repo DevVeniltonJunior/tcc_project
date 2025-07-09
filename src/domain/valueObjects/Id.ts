@@ -1,4 +1,5 @@
 import { InvalidParam } from '../exceptions';
+import * as crypto from 'crypto';
 
 export class Id {
   constructor(private readonly value: string) {
@@ -16,6 +17,11 @@ export class Id {
 
   public toString(): string {
     return this.value;
+  }
+
+  public static generate(): Id {
+    const uuid = crypto.randomUUID();
+    return new Id(uuid);
   }
 
   public equals(other: Id): boolean {

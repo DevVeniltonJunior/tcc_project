@@ -1,21 +1,38 @@
-import { DateEpoch } from '@/domain/valueObjects';
-import { InvalidParam } from '@/domain/exceptions';
+import { DateEpoch } from '@/domain/valueObjects'
+import { InvalidParam } from '@/domain/exceptions'
 
 describe('[ValueObjects] DateEpoch', () => {
-  const validInput = [1752070932575, 1633036800000, 1672531199000]; // Valid epoch timestamps
-  const invalidInput = [-1, 'invalid', null, undefined]; // Invalid inputs
+  const validDates = [
+    {
+      input: 1752070932575,
+      expectedDate: new Date(1752070932575),
+    },
+    {
+      input: new Date('2021-10-01T00:00:00.000Z'),
+      expectedDate: new Date('2021-10-01T00:00:00.000Z'),
+    },
+    {
+      input: '2023-01-01T00:00:00.000Z',
+      expectedDate: new Date('2023-01-01T00:00:00.000Z'),
+    },
+  ]
 
-  validInput.forEach((epoch) => {
-    it(`should create a DateEpoch with a valid value ${epoch}`, () => {
-      const valueObject = new DateEpoch(epoch);
-      expect(valueObject.toNumber()).toBe(epoch);
-    });
-  });
+  validDates.forEach(({ input, expectedDate }) => {
+    it(`should create a DateEpoch with valid input ${input}`, () => {
+      const vo = new DateEpoch(input)
 
-  invalidInput.forEach((epoch) => {
-    it(`should throw an error with an invalid value ${epoch}`, () => {
-      expect(() => new DateEpoch(epoch as string)).toThrow(InvalidParam);
-      expect(() => new DateEpoch(epoch as string)).toThrow(`${epoch} is invalid`);
-    });
-  });
+      expect(vo.toNumber()).toBe(expectedDate.getTime())
+      expect(vo.toDate().getTime()).toBe(expectedDate.getTime())
+      expect(vo.toISO()).toBe(expectedDate.toISOString())
+    })
+  })
+
+  const invalidInputs = [-1, 'invalid', null, undefined]
+
+  invalidInputs.forEach((input) => {
+    it(`should throw InvalidParam for invalid input ${input}`, () => {
+      expect(() => new DateEpoch(input as any)).toThrow(InvalidParam)
+      expect(() => new DateEpoch(input as any)).toThrow(`${input} is invalid`)
+    })
+  })
 })

@@ -1,6 +1,6 @@
 import { InvalidParam } from "@/domain/exceptions"
 
-export class Password {
+export class PasswordHash {
   constructor(private readonly value: string) {
     if(!this.value) throw new InvalidParam(`${value} is invalid`)
   }

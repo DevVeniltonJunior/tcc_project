@@ -7,5 +7,5 @@ export * from './InstallmentsNumber';
 export * from './Name';
 export * from './Goal';
 export * from './MoneyValue';
-export * from './Password';
+export * from './PasswordHash';
 export * from './Plan';

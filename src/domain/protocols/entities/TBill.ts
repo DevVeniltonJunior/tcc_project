@@ -24,11 +24,11 @@ export namespace TBill {
   }
 
   export type DTO = {
+    id: string,
     name?: string,
     value?: number,
     description?: string,
     installmentsNumber?: number,
-    createdAt?: Date | string,
     updatedAt?: Date | string,
     deletedAt?: Date | string,
   }

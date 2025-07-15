@@ -27,11 +27,11 @@ export namespace TUser {
   }
 
   export type DTO = {
+    id: string,
     name?: string,
     birthdate?: Date | string,
     email?: string,
     salary?: number,
-    createdAt?: Date | string,
     updatedAt?: Date | string,
     deletedAt?: Date | string,
   }

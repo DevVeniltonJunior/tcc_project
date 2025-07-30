@@ -1,7 +1,7 @@
 import {TPlanning} from "@/domain/protocols";
 import { Id, Name, Description, Goal, MoneyValue, Plan, DateEpoch } from "@/domain/valueObjects";
 
-export class Planning {
+export class PlanningDTO {
   constructor(
     private readonly _id: Id,
     private readonly _name?: Name,

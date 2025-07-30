@@ -1,13 +1,12 @@
 import { Id, Name, DateEpoch, Email, MoneyValue } from "@/domain/valueObjects";
 import { TUser } from "@/domain/protocols";
 
-export class User {
+export class UserDTO {
   constructor(
     private readonly _id: Id,
     private readonly _name?: Name,
     private readonly _birthdate?: DateEpoch,
     private readonly _email?: Email,
-    private readonly _createdAt?: DateEpoch,
     private readonly _salary?: MoneyValue,
     private readonly _updatedAt?: DateEpoch,
     private readonly _deletedAt?: DateEpoch
@@ -31,10 +30,6 @@ export class User {
 
   public getSalary(): MoneyValue | undefined {
     return this._salary;
-  }
-
-  public getCreatedAt(): DateEpoch | undefined {
-    return this._createdAt;
   }
 
   public getUpdatedAt(): DateEpoch | undefined {

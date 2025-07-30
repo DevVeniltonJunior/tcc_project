@@ -1,7 +1,7 @@
 import { TBill } from "@/domain/protocols";
 import { Id, Name, MoneyValue, Description, InstallmentsNumber, DateEpoch } from "@/domain/valueObjects";
 
-export class Bill {
+export class BillDTO {
   constructor(
     private readonly _id: Id,
     private readonly _name?: Name,

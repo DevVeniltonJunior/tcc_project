@@ -26,6 +26,7 @@ export namespace TPlanning {
   }
 
   export type DTO = {
+    id: string,
     name?: string,
     description?: string,
     goal?: string,

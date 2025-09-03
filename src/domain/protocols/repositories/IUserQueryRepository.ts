@@ -1,9 +1,9 @@
 import { User } from '@/domain/entities/'
-import { UserDTO } from '@/domain/dtos'
+import { TFilter, TUser } from '@/domain/protocols'
 import { Id } from '@/domain/valueObjects'
 
 export interface IUserQueryRepository {
   get: (id: Id) => Promise<User>
-  find: (filters: Partial<User>) => Promise<User>
-  list: (filters?: Partial<User>) => Promise<User[]>
+  find: (filters?: TFilter<TUser.Model>) => Promise<User>
+  list: (filters?: TFilter<TUser.Model>) => Promise<User[]>
 }

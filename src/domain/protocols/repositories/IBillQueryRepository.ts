@@ -1,8 +1,9 @@
 import { Bill } from '@/domain/entities/'
 import { Id } from '@/domain/valueObjects'
+import { TFilter, TBill } from '@/domain/protocols'
 
 export interface IBillQueryRepository {
   get: (id: Id) => Promise<Bill>
-  find: (filters: Partial<Bill>) => Promise<Bill>
-  list: (filters?: Partial<Bill>) => Promise<Bill[]>
+  find: (filters?: TFilter<TBill.Model>) => Promise<Bill>
+  list: (filters?: TFilter<TBill.Model>) => Promise<Bill[]>
 }

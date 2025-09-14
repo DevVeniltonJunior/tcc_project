@@ -21,10 +21,10 @@ describe("[Usecases] ListUser", () => {
         new Name("John Doe"),
         new DateEpoch(Date.now()),
         new Email("john@example.com"),
+        new DateEpoch(Date.now()),
         new Password(Id.generate(), Id.generate(), new PasswordHash("sha"), new Bool(true), new DateEpoch(Date.now())),
         [] as Bill[],
         [] as Planning[],
-        new DateEpoch(Date.now()),
         new MoneyValue(5000)
       ),
       new User(
@@ -32,10 +32,10 @@ describe("[Usecases] ListUser", () => {
         new Name("Jane Doe"),
         new DateEpoch(Date.now()),
         new Email("jane@example.com"),
+        new DateEpoch(Date.now()),
         new Password(Id.generate(), Id.generate(), new PasswordHash("sha"), new Bool(true), new DateEpoch(Date.now())),
         [] as Bill[],
         [] as Planning[],
-        new DateEpoch(Date.now()),
         new MoneyValue(6000)
       )
     ]

@@ -20,10 +20,10 @@ describe("[Entities] User", () => {
       name,
       birthdate,
       email,
+      createdAt,
       password,
       [billMock],
       [planningMock],
-      createdAt,
       salary,
       updatedAt,
       deletedAt
@@ -48,10 +48,10 @@ describe("[Entities] User", () => {
       name,
       birthdate,
       email,
+      createdAt,
       password,
       [billMock],
       [planningMock],
-      createdAt,
       salary,
       updatedAt,
       deletedAt
@@ -80,10 +80,8 @@ describe("[Entities] User", () => {
       name,
       birthdate,
       email,
-      password,
-      [],
-      [],
-      createdAt
+      createdAt,
+      password
     );
 
     const json = user.toJson();

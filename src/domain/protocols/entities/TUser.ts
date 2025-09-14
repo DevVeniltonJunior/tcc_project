@@ -6,13 +6,13 @@ export namespace TUser {
     name: string,
     birthdate: Date | string,
     email: string,
-    salary?: number,
-    password: TPassword.Entity,
-    bills: TBill.Entity[],
-    planning: TPlanning.Entity[],
+    salary?: number | null,
+    password?: TPassword.Entity,
+    bills?: TBill.Entity[],
+    planning?: TPlanning.Entity[],
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 
   export type Model = {
@@ -20,10 +20,10 @@ export namespace TUser {
     name: string,
     birthdate: Date | string,
     email: string,
-    salary?: number,
+    salary?: number | null,
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 
   export type DTO = {
@@ -31,8 +31,8 @@ export namespace TUser {
     name?: string,
     birthdate?: Date | string,
     email?: string,
-    salary?: number,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    salary?: number | null,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 }

@@ -40,10 +40,10 @@ describe("[Usecases] CreateUser", () => {
       new Name("John Doe"),
       new DateEpoch(Date.now()),
       new Email("john@example.com"),
+      new DateEpoch(Date.now()),
       new Password(Id.generate(), user_id, new PasswordHash("sha"), new Bool(true), new DateEpoch(Date.now())),
       [] as Bill[],
       [] as Planning[],
-      new DateEpoch(Date.now()),
       new MoneyValue(5000),
       undefined,
       undefined

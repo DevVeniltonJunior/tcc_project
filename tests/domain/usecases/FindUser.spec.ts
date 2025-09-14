@@ -20,10 +20,10 @@ describe("[Usecases] FindUser", () => {
         new Name("John Doe"),
         new DateEpoch(Date.now()),
         new Email("john@example.com"),
+        new DateEpoch(Date.now()),
         new Password(Id.generate(), Id.generate(), new PasswordHash("sha"), new Bool(true), new DateEpoch(Date.now())),
         [] as Bill[],
         [] as Planning[],
-        new DateEpoch(Date.now()),
         new MoneyValue(5000)
       )
   })

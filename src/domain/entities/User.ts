@@ -8,10 +8,10 @@ export class User {
     private readonly _name: Name,
     private readonly _birthdate: DateEpoch,
     private readonly _email: Email,
-    private readonly _password: Password,
-    private readonly _bills: Bill[],
-    private readonly _planning: Planning[],
     private readonly _createdAt: DateEpoch,
+    private readonly _password?: Password,
+    private readonly _bills?: Bill[],
+    private readonly _planning?: Planning[],
     private readonly _salary?: MoneyValue,
     private readonly _updatedAt?: DateEpoch,
     private readonly _deletedAt?: DateEpoch
@@ -37,15 +37,15 @@ export class User {
     return this._salary;
   }
 
-  public getPassword(): Password {
+  public getPassword(): Password | undefined {
     return this._password;
   }
 
-  public getBills(): Bill[] {
+  public getBills(): Bill[] | undefined {
     return this._bills;
   }
 
-  public getPlanning(): Planning[] {
+  public getPlanning(): Planning[] | undefined {
     return this._planning;
   }
 
@@ -68,9 +68,9 @@ export class User {
       birthdate: this._birthdate.toISO(),
       email: this._email.toString(),
       salary: this._salary?.toNumber(),
-      password: this._password.toJson(),
-      bills: this._bills.map(bill => bill.toJson()),
-      planning: this._planning.map(plan => plan.toJson()),
+      password: this._password?.toJson(),
+      bills: this._bills?.map(bill => bill.toJson()),
+      planning: this._planning?.map(plan => plan.toJson()),
       createdAt: this._createdAt.toISO(),
       updatedAt: this._updatedAt?.toISO(),
       deletedAt: this._deletedAt?.toISO(),

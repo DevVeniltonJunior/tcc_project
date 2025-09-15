@@ -4,6 +4,7 @@ import { Id } from "@/domain/valueObjects";
 import { PrismaClient } from '@prisma/client'
 import { UserAdapter } from "@/infra/adpters";
 import { buildWhereInput } from "@/infra/utils";
+import { DatabaseException } from "@/infra/exception";
 
 const PRISMA_CLIENT = new PrismaClient()
 
@@ -14,22 +15,22 @@ export class UserQueryRepository implements IUserQueryRepository {
     this._db = PRISMA_CLIENT.user
   }
 
-  public async get(id: Id): Promise<User | null> {
+  public async get(id: Id): Promise<User> {
     const user = await this._db.findUnique({where: { id: id.toString() }})
 
-    if (!user) return null
+    if (!user) throw new DatabaseException("User not found")
 
     return UserAdapter.toEntity(user)
   }
 
-  public async find(filters?: TFilter<TUser.Model>): Promise<User | null> {
+  public async find(filters?: TFilter<TUser.Model>): Promise<User> {
     const where = buildWhereInput<TUser.Model>(filters, {
       stringFields: ["id", "name", "email"],
       dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
     })
     const user = await this._db.findFirst({ where: where })
 
-    if (!user) return null
+    if (!user) throw new DatabaseException("User not found")
 
     return UserAdapter.toEntity(user)
   }

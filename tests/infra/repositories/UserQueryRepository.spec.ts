@@ -5,6 +5,7 @@ import { DateEpoch, Email, Id, Name } from "@/domain/valueObjects"
 import { User } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TUser } from "@/domain/protocols"
+import { DatabaseException } from "@/infra/exception"
 
 jest.mock("@prisma/client", () => {
   const mUser = {
@@ -65,14 +66,16 @@ describe("[Repository] UserQueryRepository", () => {
       expect(result).toBe(entity)
     })
 
-    it("should return null if user not found", async () => {
-      prismaMock.findUnique.mockResolvedValue(null)
-      const result = await repo.get(Id.generate())
-      expect(result).toBeNull()
+    it("should throw an error if user not found", async () => {
+      await expect(repo.find({ name: "Nonexistent" })).rejects.toThrow("User not found")
     })
   })
 
   describe("find", () => {
+    it("should throw an error if no user matches filters", async () => {
+      await expect(repo.find({ name: "Nonexistent" })).rejects.toThrow("User not found")
+    })
+
     it("should return a user entity if found with filters", async () => {
       const filters = { name: "John" }
       const id = Id.generate()
@@ -108,13 +111,6 @@ describe("[Repository] UserQueryRepository", () => {
       expect(prismaMock.findFirst).toHaveBeenCalledWith({ where: { name: "John" } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
       expect(result).toBe(entity)
-    })
-
-    it("should return null if no user matches filters", async () => {
-      (buildWhereInput as jest.Mock).mockReturnValue({})
-      prismaMock.findFirst.mockResolvedValue(null)
-      const result = await repo.find({ name: "Nonexistent" })
-      expect(result).toBeNull()
     })
   })
 

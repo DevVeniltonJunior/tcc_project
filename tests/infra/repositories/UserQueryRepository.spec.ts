@@ -1,7 +1,6 @@
 import { UserQueryRepository } from "@/infra/repositories"
 import { UserAdapter } from "@/infra/adpters"
-import { PrismaClient } from "@prisma/client"
-import { DateEpoch, Email, Id, Name } from "@/domain/valueObjects"
+import { Id, Name, Email, DateEpoch } from "@/domain/valueObjects"
 import { User } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TUser } from "@/domain/protocols"
@@ -31,7 +30,7 @@ describe("[Repository] UserQueryRepository", () => {
   beforeEach(() => {
     repo = new UserQueryRepository()
     prismaMock = (repo as any)._db
-    jest.clearAllMocks()
+    jest.resetAllMocks() // 👈 evita vazamento de mocks
   })
 
   describe("get", () => {
@@ -45,7 +44,7 @@ describe("[Repository] UserQueryRepository", () => {
         salary: null,
         createdAt: new Date().toISOString(),
         updatedAt: null,
-        deletedAt: null
+        deletedAt: null,
       }
 
       const entity = new User(
@@ -57,7 +56,7 @@ describe("[Repository] UserQueryRepository", () => {
       )
 
       prismaMock.findUnique.mockResolvedValue(dbUser)
-      ;(UserAdapter.toEntity as unknown as jest.Mock).mockReturnValue(entity)
+      ;(UserAdapter.toEntity as jest.Mock).mockReturnValue(entity)
 
       const result = await repo.get(id)
 
@@ -66,16 +65,15 @@ describe("[Repository] UserQueryRepository", () => {
       expect(result).toBe(entity)
     })
 
-    it("should throw an error if user not found", async () => {
-      await expect(repo.find({ name: "Nonexistent" })).rejects.toThrow("User not found")
+    it("should throw DatabaseException if prisma fails", async () => {
+      const id = Id.generate()
+      prismaMock.findUnique.mockRejectedValue(new Error("Prisma error"))
+
+      await expect(repo.get(id)).rejects.toThrow(DatabaseException)
     })
   })
 
   describe("find", () => {
-    it("should throw an error if no user matches filters", async () => {
-      await expect(repo.find({ name: "Nonexistent" })).rejects.toThrow("User not found")
-    })
-
     it("should return a user entity if found with filters", async () => {
       const filters = { name: "John" }
       const id = Id.generate()
@@ -87,7 +85,7 @@ describe("[Repository] UserQueryRepository", () => {
         salary: null,
         createdAt: new Date().toISOString(),
         updatedAt: null,
-        deletedAt: null
+        deletedAt: null,
       }
 
       const entity = new User(
@@ -96,11 +94,11 @@ describe("[Repository] UserQueryRepository", () => {
         new DateEpoch(dbUser.birthdate),
         new Email(dbUser.email),
         new DateEpoch(dbUser.createdAt)
-      );
+      )
 
-      (buildWhereInput as jest.Mock).mockReturnValue({ name: "John" })
+      ;(buildWhereInput as jest.Mock).mockReturnValue({ name: "John" })
       prismaMock.findFirst.mockResolvedValue(dbUser)
-      ;(UserAdapter.toEntity as unknown as jest.Mock).mockReturnValue(entity)
+      ;(UserAdapter.toEntity as jest.Mock).mockReturnValue(entity)
 
       const result = await repo.find(filters)
 
@@ -111,6 +109,16 @@ describe("[Repository] UserQueryRepository", () => {
       expect(prismaMock.findFirst).toHaveBeenCalledWith({ where: { name: "John" } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
       expect(result).toBe(entity)
+    })
+
+    it("should throw error if no user found", async () => {
+      prismaMock.findFirst.mockResolvedValue(null)
+      await expect(repo.find({ name: "Nonexistent" })).rejects.toThrow("User not found")
+    })
+
+    it("should throw DatabaseException if prisma fails", async () => {
+      prismaMock.findFirst.mockRejectedValue(new Error("Prisma error"))
+      await expect(repo.find({ name: "Error" })).rejects.toThrow(DatabaseException)
     })
   })
 
@@ -126,34 +134,35 @@ describe("[Repository] UserQueryRepository", () => {
           salary: null,
           createdAt: new Date().toISOString(),
           updatedAt: null,
-          deletedAt: null
+          deletedAt: null,
         },
         {
           id: Id.generate().toString(),
           name: "Jane",
           birthdate: new Date().toISOString(),
-          email: "JohnDoe@gmail.com",
+          email: "JaneDoe@gmail.com",
           salary: null,
           createdAt: new Date().toISOString(),
           updatedAt: null,
-          deletedAt: null
-        }
+          deletedAt: null,
+        },
       ]
 
-      const entities = dbUsers.map(user => 
-        new User(
-          new Id(user.id),
-          new Name(user.name),
-          new DateEpoch(user.birthdate),
-          new Email(user.email),
-          new DateEpoch(user.createdAt)
-        )
-      );
+      const entities = dbUsers.map(
+        (user) =>
+          new User(
+            new Id(user.id),
+            new Name(user.name),
+            new DateEpoch(user.birthdate),
+            new Email(user.email),
+            new DateEpoch(user.createdAt)
+          )
+      )
 
-      (buildWhereInput as jest.Mock).mockReturnValue({ name: "John" })
+      ;(buildWhereInput as jest.Mock).mockReturnValue({ name: "John" })
       prismaMock.findMany.mockResolvedValue(dbUsers)
-      ;(UserAdapter.toEntity as unknown as jest.Mock).mockImplementation(
-        (user: TUser.Model) => entities.find(e => e.getId().toString() === user.id)
+      ;(UserAdapter.toEntity as jest.Mock).mockImplementation(
+        (user: TUser.Model) => entities.find((e) => e.getId().toString() === user.id)
       )
 
       const result = await repo.list(filters)
@@ -168,10 +177,16 @@ describe("[Repository] UserQueryRepository", () => {
     })
 
     it("should return empty array if no users found", async () => {
-      (buildWhereInput as jest.Mock).mockReturnValue({})
+      ;(buildWhereInput as jest.Mock).mockReturnValue({})
       prismaMock.findMany.mockResolvedValue([])
+
       const result = await repo.list({ name: "Nonexistent" })
       expect(result).toEqual([])
+    })
+
+    it("should throw DatabaseException if prisma fails", async () => {
+      prismaMock.findMany.mockRejectedValue(new Error("Prisma error"))
+      await expect(repo.list({ name: "Error" })).rejects.toThrow(DatabaseException)
     })
   })
 })

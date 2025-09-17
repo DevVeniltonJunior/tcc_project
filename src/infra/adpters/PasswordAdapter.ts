@@ -3,7 +3,7 @@ import { TPassword } from '@/domain/protocols'
 import { Id, DateEpoch, PasswordHash, Bool } from '@/domain/valueObjects'
 
 export class PasswordAdapter {
-  public static toEntity(model: TPassword.Entity): Password {
+  public static toEntity(model: TPassword.Model): Password {
     return new Password(
       new Id(model.id),
       new Id(model.userId),

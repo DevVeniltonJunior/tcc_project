@@ -4,7 +4,7 @@ import { TBill } from '@/domain/protocols'
 import { Id, Name, DateEpoch, MoneyValue, Description, InstallmentsNumber } from '@/domain/valueObjects'
 
 export class BillAdapter {
-  public static toEntity(model: TBill.Entity): Bill {
+  public static toEntity(model: TBill.Model): Bill {
     return new Bill(
       new Id(model.id),
       new Id(model.userId),

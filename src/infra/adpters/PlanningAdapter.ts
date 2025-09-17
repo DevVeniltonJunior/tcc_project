@@ -4,7 +4,7 @@ import { TPlanning } from '@/domain/protocols'
 import { Id, Name, Email, DateEpoch, MoneyValue, Description, Goal, Plan } from '@/domain/valueObjects'
 
 export class PlanningAdapter {
-  public static toEntity(model: TPlanning.Entity): Planning {
+  public static toEntity(model: TPlanning.Model): Planning {
     return new Planning(
       new Id(model.id),        
       new Id(model.userId),

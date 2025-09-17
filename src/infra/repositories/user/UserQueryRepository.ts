@@ -16,33 +16,48 @@ export class UserQueryRepository implements IUserQueryRepository {
   }
 
   public async get(id: Id): Promise<User> {
-    const user = await this._db.findUnique({where: { id: id.toString() }})
+    try {
+      const user = await this._db.findUnique({where: { id: id.toString() }})
 
-    if (!user) throw new DatabaseException("User not found")
+      if (!user) throw new DatabaseException("User not found")
 
-    return UserAdapter.toEntity(user)
+      return UserAdapter.toEntity(user)
+    }
+    catch(error: any) {
+      throw new DatabaseException(error.message)
+    }
   }
 
   public async find(filters?: TFilter<TUser.Model>): Promise<User> {
-    const where = buildWhereInput<TUser.Model>(filters, {
-      stringFields: ["id", "name", "email"],
-      dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
-    })
-    const user = await this._db.findFirst({ where: where })
+    try {
+      const where = buildWhereInput<TUser.Model>(filters, {
+        stringFields: ["id", "name", "email"],
+        dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
+      })
+      const user = await this._db.findFirst({ where: where })
 
-    if (!user) throw new DatabaseException("User not found")
+      if (!user) throw new DatabaseException("User not found")
 
-    return UserAdapter.toEntity(user)
+      return UserAdapter.toEntity(user)
+    }
+    catch(error: any) {
+      throw new DatabaseException(error.message)
+    }
   }
 
   public async list(filters?: TFilter<TUser.Model>): Promise<User[]> {
-    const where = buildWhereInput<TUser.Model>(filters, {
-      stringFields: ["id", "name", "email"],
-      dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
-    })
-    const users = await this._db.findMany({ where: where })
+    try {
+      const where = buildWhereInput<TUser.Model>(filters, {
+        stringFields: ["id", "name", "email"],
+        dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
+      })
+      const users = await this._db.findMany({ where: where })
 
-    return users.map(user => UserAdapter.toEntity(user))
+      return users.map(user => UserAdapter.toEntity(user))
+    }
+    catch(error: any) {
+      throw new DatabaseException(error.message)
+    }
   }
   
 }

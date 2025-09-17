@@ -12,7 +12,14 @@ const config: Config = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   transform: {
     '\\.ts$': 'ts-jest'
-  }
+  },
+  coveragePathIgnorePatterns: [
+    "<rootDir>/src/infra/config/db",
+    "<rootDir>/src/infra/config/module-alias",
+    "<rootDir>/src/infra/protocols",
+    "<rootDir>/src/presentation/protocols",
+    "<rootDir>/src/domain/protocols"
+  ]
 };
 
 export default config;

@@ -3,36 +3,36 @@ export namespace TPlanning {
     id: string,
     userId: string,
     name: string,
-    description?: string,
+    description?: string | null,
     goal: string,
     goalValue: number,
     plan: string,
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 
   export type Model = {
     id: string,
     userId: string,
     name: string,
-    description?: string,
+    description?: string | null,
     goal: string,
     goalValue: number,
     plan: string,
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 
   export type DTO = {
     id: string,
     name?: string,
-    description?: string,
+    description?: string | null,
     goal?: string,
     goalValue?: number,
     plan?: string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 }

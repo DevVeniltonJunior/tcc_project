@@ -4,11 +4,11 @@ export namespace TBill {
     userId: string,
     name: string,
     value: number,
-    description?: string,
-    installmentsNumber?: number,
+    description?: string | null,
+    installmentsNumber?: number| null,
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string| null,
+    deletedAt?: Date | string| null,
   }
 
   export type Model = {
@@ -16,20 +16,20 @@ export namespace TBill {
     userId: string,
     name: string,
     value: number,
-    description?: string,
-    installmentsNumber?: number,
+    description?: string | null,
+    installmentsNumber?: number | null,
     createdAt: Date | string,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 
   export type DTO = {
     id: string,
     name?: string,
     value?: number,
-    description?: string,
-    installmentsNumber?: number,
-    updatedAt?: Date | string,
-    deletedAt?: Date | string,
+    description?: string | null,
+    installmentsNumber?: number | null,
+    updatedAt?: Date | string | null,
+    deletedAt?: Date | string | null,
   }
 }

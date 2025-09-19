@@ -4,7 +4,7 @@ import { IUserCommandRepository } from "@/domain/protocols";
 import { Id } from "@/domain/valueObjects";
 import { PrismaClient } from '@prisma/client'
 import { UserAdapter } from "@/infra/adpters";
-import { DatabaseException } from "@/infra/exception";
+import { DatabaseException } from "@/infra/exceptions";
 
 const PRISMA_CLIENT = new PrismaClient()
 

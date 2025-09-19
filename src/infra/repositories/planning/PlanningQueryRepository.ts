@@ -4,7 +4,7 @@ import { Id } from "@/domain/valueObjects";
 import { PrismaClient } from '@prisma/client'
 import { PlanningAdapter } from "@/infra/adpters";
 import { buildWhereInput } from "@/infra/utils";
-import { DatabaseException } from "@/infra/exception";
+import { DatabaseException } from "@/infra/exceptions";
 
 const PRISMA_CLIENT = new PrismaClient()
 

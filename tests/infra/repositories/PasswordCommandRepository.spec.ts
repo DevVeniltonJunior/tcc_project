@@ -2,7 +2,7 @@ import { PasswordCommandRepository } from "@/infra/repositories"
 import { PasswordAdapter } from "@/infra/adpters"
 import { Id } from "@/domain/valueObjects"
 import { TPassword } from "@/domain/protocols"
-import { DatabaseException } from "@/infra/exception"
+import { DatabaseException } from "@/infra/exceptions"
 
 jest.mock("@prisma/client", () => {
   const mPassword = {

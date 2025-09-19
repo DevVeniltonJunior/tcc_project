@@ -4,7 +4,7 @@ import { Id, Name, DateEpoch, MoneyValue } from "@/domain/valueObjects"
 import { Bill } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TBill } from "@/domain/protocols"
-import { DatabaseException } from "@/infra/exception"
+import { DatabaseException } from "@/infra/exceptions"
 
 jest.mock("@prisma/client", () => {
   const mBill = {

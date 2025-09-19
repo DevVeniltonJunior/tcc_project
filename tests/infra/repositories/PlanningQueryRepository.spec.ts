@@ -4,7 +4,7 @@ import { Id, Name, DateEpoch, MoneyValue, Goal, Plan } from "@/domain/valueObjec
 import { Planning } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TPlanning } from "@/domain/protocols"
-import { DatabaseException } from "@/infra/exception"
+import { DatabaseException } from "@/infra/exceptions"
 
 jest.mock("@prisma/client", () => {
   const mPlanning = {

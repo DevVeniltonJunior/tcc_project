@@ -4,7 +4,7 @@ import { Id, DateEpoch, PasswordHash, Bool } from "@/domain/valueObjects"
 import { Password } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TPassword } from "@/domain/protocols"
-import { DatabaseException } from "@/infra/exception"
+import { DatabaseException } from "@/infra/exceptions"
 
 jest.mock("@prisma/client", () => {
   const mPassword = {

@@ -4,7 +4,7 @@ import { Id, Name, Email, DateEpoch } from "@/domain/valueObjects"
 import { User } from "@/domain/entities"
 import { buildWhereInput } from "@/infra/utils"
 import { TUser } from "@/domain/protocols"
-import { DatabaseException } from "@/infra/exception"
+import { DatabaseException } from "@/infra/exceptions"
 
 jest.mock("@prisma/client", () => {
   const mUser = {

@@ -34,7 +34,7 @@ describe("[Repository] UserQueryRepository", () => {
   })
 
   describe("get", () => {
-    it("should return a user entity if found", async () => {
+    it("should return a user entity if found by id", async () => {
       const id = Id.generate()
       const dbUser = {
         id: id.toString(),
@@ -70,6 +70,47 @@ describe("[Repository] UserQueryRepository", () => {
       prismaMock.findUnique.mockRejectedValue(new Error("Prisma error"))
 
       await expect(repo.get(id)).rejects.toThrow(DatabaseException)
+    })
+  })
+
+  describe("getByEmail", () => {
+    it("should return a user entity if found by email", async () => {
+      const id = Id.generate()
+      const email = new Email("JohnDoe@gmail.com")
+      const dbUser = {
+        id: id.toString(),
+        name: "Internet",
+        birthdate: new Date().toISOString(),
+        email: email.toString(),
+        salary: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        deletedAt: null,
+      }
+
+      const entity = new User(
+        id,
+        new Name(dbUser.name),
+        new DateEpoch(dbUser.birthdate),
+        email,
+        new DateEpoch(dbUser.createdAt)
+      )
+
+      prismaMock.findUnique.mockResolvedValue(dbUser)
+      ;(UserAdapter.toEntity as jest.Mock).mockReturnValue(entity)
+
+      const result = await repo.getByEmail(email)
+
+      expect(prismaMock.findUnique).toHaveBeenCalledWith({ where: { email: email.toString() } })
+      expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
+      expect(result).toBe(entity)
+    })
+
+    it("should throw DatabaseException if prisma fails", async () => {
+      const email = new Email("JohnDoe@gmail.com")
+      prismaMock.findUnique.mockRejectedValue(new Error("Prisma error"))
+
+      await expect(repo.getByEmail(email)).rejects.toThrow(DatabaseException)
     })
   })
 

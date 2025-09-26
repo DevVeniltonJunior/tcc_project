@@ -1,6 +1,6 @@
 import { User } from "@/domain/entities";
 import { IUserQueryRepository, TFilter, TUser } from "@/domain/protocols";
-import { Id } from "@/domain/valueObjects";
+import { Email, Id } from "@/domain/valueObjects";
 import { PrismaClient } from '@prisma/client'
 import { UserAdapter } from "@/infra/adpters";
 import { buildWhereInput } from "@/infra/utils";
@@ -18,6 +18,19 @@ export class UserQueryRepository implements IUserQueryRepository {
   public async get(id: Id): Promise<User> {
     try {
       const user = await this._db.findUnique({where: { id: id.toString() }})
+
+      if (!user) throw new DatabaseException("User not found")
+
+      return UserAdapter.toEntity(user)
+    }
+    catch(error: any) {
+      throw new DatabaseException(error.message)
+    }
+  }
+
+  public async getByEmail(email: Email): Promise<User> {
+    try {
+      const user = await this._db.findUnique({where: { email: email.toString() }})
 
       if (!user) throw new DatabaseException("User not found")
 

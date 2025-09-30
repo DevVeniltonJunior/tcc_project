@@ -1,7 +1,7 @@
 import { DeleteUser } from "@/domain/usecases"
 import { User } from "@/domain/entities"
 import { IUserCommandRepository } from "@/domain/protocols"
-import { Id } from "@/domain/valueObjects"
+import { Bool, Id } from "@/domain/valueObjects"
 import { UserDTO } from "@/domain/dtos"
 
 export class UserCommandRepositoryStub implements IUserCommandRepository {
@@ -37,7 +37,7 @@ describe("[Usecases] DeleteUser", () => {
   })
 
   it("should call repository.delete with the correct User dto", async () => {
-    const result = await usecase.execute(user_id, false)
+    const result = await usecase.execute(user_id, new Bool(false))
 
     // Verify that repository.delete was called with the User dto
     expect(repository.softDelete).toHaveBeenCalledWith(user_id)
@@ -46,6 +46,6 @@ describe("[Usecases] DeleteUser", () => {
   it("should propagate errors thrown by the repository", async () => {
     repository.softDelete.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute(user_id, false)).rejects.toThrow("DB error")
+    await expect(usecase.execute(user_id, new Bool(false))).rejects.toThrow("DB error")
   })
 })

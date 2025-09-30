@@ -37,7 +37,7 @@ describe("[Usecases] DeleteUser", () => {
   })
 
   it("should call repository.delete with the correct User dto", async () => {
-    const result = await usecase.execute(user_id)
+    const result = await usecase.execute(user_id, false)
 
     // Verify that repository.delete was called with the User dto
     expect(repository.softDelete).toHaveBeenCalledWith(user_id)
@@ -46,6 +46,6 @@ describe("[Usecases] DeleteUser", () => {
   it("should propagate errors thrown by the repository", async () => {
     repository.softDelete.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute(user_id)).rejects.toThrow("DB error")
+    await expect(usecase.execute(user_id, false)).rejects.toThrow("DB error")
   })
 })

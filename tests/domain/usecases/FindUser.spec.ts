@@ -28,13 +28,8 @@ describe("[Usecases] FindUser", () => {
       )
   })
 
-  it("should return all users when no filter is provided", async () => {
-    repository.find.mockResolvedValue(user)
-
-    const result = await usecase.execute()
-
-    expect(repository.find).toHaveBeenCalled()
-    expect(result).toEqual(user)
+  it("should throw an error when no filter is provided", async () => {
+    await expect(usecase.execute()).rejects.toThrow("At least one filter must be provided")
   })
 
   it("should return all users when a filter is provided (currently ignored)", async () => {
@@ -50,6 +45,6 @@ describe("[Usecases] FindUser", () => {
   it("should propagate errors from the repository", async () => {
     repository.find.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute()).rejects.toThrow("DB error")
+    await expect(usecase.execute({name: "Renato"})).rejects.toThrow("DB error")
   })
 })

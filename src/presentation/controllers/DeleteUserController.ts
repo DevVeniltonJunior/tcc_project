@@ -1,11 +1,9 @@
 import { DeleteUser } from '@/domain/usecases'
-import { Id, Name, Email, DateEpoch, MoneyValue } from '@/domain/valueObjects'
+import { Id, Bool } from '@/domain/valueObjects'
 import { UserCommandRepository } from '@/infra/repositories'
 import { TDeleteUser, TRoute, Response } from '@/presentation/protocols'
-import { validateRequiredFields } from "@/presentation/utils"
 import { BadRequestError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
-import { UserDTO } from '@/domain/dtos'
 
 export class DeleteUserController {
   /**
@@ -52,7 +50,7 @@ export class DeleteUserController {
 
       const deleteUser = new DeleteUser(new UserCommandRepository())
 
-      await deleteUser.execute(new Id(id), isPermanent)
+      await deleteUser.execute(new Id(id), new Bool(isPermanent))
   
       return {
         statusCode: 200,

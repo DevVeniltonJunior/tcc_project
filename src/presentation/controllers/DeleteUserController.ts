@@ -13,13 +13,20 @@ export class DeleteUserController {
    *     summary: Delete User
    *     tags: [Users]
    *     parameters:
-   *       - in: query
+   *       - in: path
    *         name: id
    *         schema:
    *           type: string
    *         required: true
    *         description: User to be deleted
    *         example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
+   *       - in: query
+   *         name: permanent
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Soft or hard delete
+   *         example: "true"
    *     responses:
    *       200:
    *         description: User deleted successfully

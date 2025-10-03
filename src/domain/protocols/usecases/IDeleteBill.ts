@@ -1,5 +1,5 @@
-import { Id } from '@/domain/valueObjects'
+import { Bool, Id } from '@/domain/valueObjects'
 
 export interface IDeleteBill {
-  execute: (id: Id) => Promise<void>
+  execute: (id: Id, isPermanent: Bool) => Promise<void>
 }

@@ -1,9 +1,11 @@
 export namespace TDeletePlanning {
   export namespace Request {
-    export type params = object
+    export type params = {
+      id: string
+    }
     export type body = object
     export type query = {
-      id: string
+      permanent: string
     }
   }
   export type Response = any

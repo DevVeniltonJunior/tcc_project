@@ -1,7 +1,10 @@
 import 'module-alias/register'
 import { Router, Request, Response } from 'express'
-import { TCreateUser, TDeleteUser, TFindUser, TListUser, TUpdateUser } from '@/presentation/protocols'
-import { CreateUserController, DeleteUserController, FindUserController, ListUserController, UpdateUserController } from '@/presentation/controllers'
+import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning } from '@/presentation/protocols'
+import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController } from '@/presentation/controllers'
+import { CreateBillController } from '@/presentation/controllers/CreateBillController'
+import { UpdateBillController } from '@/presentation/controllers/UpdateBillController'
+import { DeleteBillController } from '@/presentation/controllers/DeleteBillController'
 
 export const router = Router()
 
@@ -36,5 +39,60 @@ router.get('/user', async (req: Request<any, any, any, TFindUser.Request.query>,
 
 router.get('/users', async (req: Request<any, any, any, TListUser.Request.query>, res: Response) => {
   const response = await ListUserController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/password', async (req: Request<any, any, any, TCreatePassword.Request.body>, res: Response) => {
+  const response = await CreatePasswordController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/bills', async (req: Request<any, any, any, TCreateBill.Request.body>, res: Response) => {
+  const response = await CreateBillController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.put('/bills', async (req: Request<any, any, any, TUpdateBill.Request.body>, res: Response) => {
+  const response = await UpdateBillController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.delete('/bills/:id', async (req: Request<any, any, any, TDeleteBill.Request.query>, res: Response) => {
+  const response = await DeleteBillController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.get('/bill', async (req: Request<any, any, any, TFindBill.Request.query>, res: Response) => {
+  const response = await FindBillController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.get('/bills', async (req: Request<any, any, any, TListBill.Request.query>, res: Response) => {
+  const response = await ListBillController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/plannings', async (req: Request<any, any, any, TCreatePlanning.Request.body>, res: Response) => {
+  const response = await CreatePlanningController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.put('/plannings', async (req: Request<any, any, any, TUpdatePlanning.Request.body>, res: Response) => {
+  const response = await UpdatePlanningController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.delete('/plannings/:id', async (req: Request<any, any, any, TDeletePlanning.Request.query>, res: Response) => {
+  const response = await DeletePlanningController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.get('/planning', async (req: Request<any, any, any, TFindPlanning.Request.query>, res: Response) => {
+  const response = await FindPlanningController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.get('/plannings', async (req: Request<any, any, any, TListPlanning.Request.query>, res: Response) => {
+  const response = await ListPlanningController.handle(req)
   res.status(response.statusCode).json(response.data)
 })

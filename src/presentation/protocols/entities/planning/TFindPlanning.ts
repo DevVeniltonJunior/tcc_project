@@ -1,6 +1,6 @@
 import { TPlanning } from '@/domain/protocols'
 
-export namespace TGetPlanning {
+export namespace TFindPlanning {
   export namespace Request {
     export type params = object
     export type body = object

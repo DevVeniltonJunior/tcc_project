@@ -1,6 +1,6 @@
 import { TBill } from '@/domain/protocols'
 
-export namespace TGetBill {
+export namespace TFindBill {
   export namespace Request {
     export type params = object
     export type body = object

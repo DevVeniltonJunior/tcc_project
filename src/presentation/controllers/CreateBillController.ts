@@ -92,7 +92,7 @@ export class CreateBillController {
       validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "userId", "value"])
 
       const user = await new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})
-      if (!user) throw new BadRequestError("User not found")
+      if (!user) throw new NotFoundError("User not found")
 
       const createBill = new CreateBill(new BillCommandRepository())
 

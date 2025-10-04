@@ -100,7 +100,7 @@ export class CreatePlanningController {
       validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["userId", "name", "goal", "goalValue", "plan"])
 
       const user = await new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
-      if (!user) throw new BadRequestError("User not found")
+      if (!user) throw new NotFoundError("User not found")
 
       const createPlanning = new CreatePlanning(new PlanningCommandRepository())
 

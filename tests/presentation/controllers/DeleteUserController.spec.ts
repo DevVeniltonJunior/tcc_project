@@ -1,12 +1,15 @@
 import { DeleteUserController } from "@/presentation/controllers/DeleteUserController"
-import { DeleteUser } from "@/domain/usecases"
+import { DeleteUser, FindUser } from "@/domain/usecases"
 import { UserCommandRepository } from "@/infra/repositories"
 import { BadRequestError } from "@/presentation/exceptions"
 import { InvalidParam } from "@/domain/exceptions"
-import { Bool, Id } from "@/domain/valueObjects"
+import { Bool, DateEpoch, Email, Id, MoneyValue, Name } from "@/domain/valueObjects"
+import { User } from "@/domain/entities"
 
 describe("[Controller] DeleteUserController", () => {
   let usecaseSpy: jest.SpyInstance
+  let queryUsecaseSpy: jest.SpyInstance
+  let user: User
 
   const makeRequest = (params: any = {}, query: any = {}) => ({
     body: {},
@@ -15,12 +18,28 @@ describe("[Controller] DeleteUserController", () => {
   })
 
   beforeEach(() => {
+    user = new User(
+      Id.generate(),
+      new Name("Jane Doe"),
+      new DateEpoch("1995-06-15"),
+      new Email("jane_doe@email.com"),
+      new DateEpoch(Date.now()),
+      undefined,
+      undefined,
+      undefined,
+      new MoneyValue(2500)
+    )
+
     jest.restoreAllMocks()
+    queryUsecaseSpy = jest.spyOn(FindUser.prototype, "execute")
     usecaseSpy = jest.spyOn(DeleteUser.prototype, "execute").mockResolvedValue(undefined)
     jest.spyOn(UserCommandRepository.prototype, "softDelete").mockResolvedValue(undefined)
+    jest.spyOn(UserCommandRepository.prototype, "hardDelete").mockResolvedValue(undefined)
   })
 
   it("should delete user successfully (soft delete by default)", async () => {
+    queryUsecaseSpy.mockResolvedValue(user)
+
     const userId = Id.generate()
     const req = makeRequest({ id: userId.toString() })
 
@@ -32,6 +51,8 @@ describe("[Controller] DeleteUserController", () => {
   })
 
   it("should delete user permanently if query.permanent=true", async () => {
+    queryUsecaseSpy.mockResolvedValue(user)
+
     const userId = Id.generate()
     const req = makeRequest({ id: userId.toString() }, { permanent: "true" })
 
@@ -43,6 +64,8 @@ describe("[Controller] DeleteUserController", () => {
   })
 
   it("should return 400 if id is missing", async () => {
+    queryUsecaseSpy.mockResolvedValue(user)
+
     const req = makeRequest({}, { permanent: "true" })
 
     const result = await DeleteUserController.handle(req)
@@ -52,10 +75,12 @@ describe("[Controller] DeleteUserController", () => {
   })
 
   it("should return 400 if InvalidParam is thrown", async () => {
+    queryUsecaseSpy.mockResolvedValue(user)
+
     usecaseSpy.mockRejectedValueOnce(new InvalidParam("id"))
 
     const userId = Id.generate()
-    const req = makeRequest({ id: userId })
+    const req = makeRequest({ id: userId.toString() })
 
     const result = await DeleteUserController.handle(req)
 
@@ -63,11 +88,25 @@ describe("[Controller] DeleteUserController", () => {
     expect(result.data).toEqual({ error: "id" })
   })
 
+  it("should return 404 if user not exists", async () => {
+      const req = makeRequest({
+        id: Id.generate().toString(),
+        name: "Internet"
+      })
+  
+      const result = await DeleteUserController.handle(req)
+  
+      expect(result.statusCode).toBe(404)
+      expect(result.data).toHaveProperty("error")
+    })
+
   it("should return 500 if unexpected error occurs", async () => {
+    queryUsecaseSpy.mockResolvedValue(user)
+
     usecaseSpy.mockRejectedValueOnce(new Error("Database crash"))
 
     const userId = Id.generate()
-    const req = makeRequest({ id: userId })
+    const req = makeRequest({ id: userId.toString() })
 
     const result = await DeleteUserController.handle(req)
 

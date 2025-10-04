@@ -4,8 +4,9 @@ import { Id, Name, DateEpoch, MoneyValue, Description, InstallmentsNumber } from
 import { BillCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreateBill, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class CreateBillController {
   /**
@@ -90,7 +91,7 @@ export class CreateBillController {
       console.log(billParam)
       validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "userId", "value"])
 
-      const user = new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})
       if (!user) throw new BadRequestError("User not found")
 
       const createBill = new CreateBill(new BillCommandRepository())
@@ -112,6 +113,11 @@ export class CreateBillController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

@@ -4,9 +4,10 @@ import { Id, Name, Email, DateEpoch, MoneyValue, Description, InstallmentsNumber
 import { PlanningCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreatePlanning, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { PasswordHasher } from '@/infra/utils/PasswordHasher'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class CreatePlanningController {
   /**
@@ -98,7 +99,7 @@ export class CreatePlanningController {
       console.log(planningParam)
       validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["userId", "name", "goal", "goalValue", "plan"])
 
-      const user = new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
       if (!user) throw new BadRequestError("User not found")
 
       const createPlanning = new CreatePlanning(new PlanningCommandRepository())
@@ -121,6 +122,11 @@ export class CreatePlanningController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

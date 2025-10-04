@@ -4,9 +4,10 @@ import { Id, DateEpoch, PasswordHash, Bool } from '@/domain/valueObjects'
 import { PasswordCommandRepository, UserCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreatePassword, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { PasswordHasher } from '@/infra/utils/PasswordHasher'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class CreatePasswordController {
   /**
@@ -57,8 +58,8 @@ export class CreatePasswordController {
 
       validateRequiredFields<TCreatePassword.Request.body>(passwordParam, ["userId", "password"])
 
-      const user = new FindUser(new UserQueryRepository()).execute({ id: passwordParam.userId })
-      if (!user) throw new BadRequestError("User not found")
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: passwordParam.userId })
+      if (!user) throw new NotFoundError("User not found")
 
       const createPassword = new CreatePassword(new PasswordCommandRepository())
 
@@ -77,6 +78,11 @@ export class CreatePasswordController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

@@ -1,7 +1,7 @@
 import { Planning } from '@/domain/entities'
-import { CreatePlanning } from '@/domain/usecases'
+import { CreatePlanning, FindUser } from '@/domain/usecases'
 import { Id, Name, Email, DateEpoch, MoneyValue, Description, InstallmentsNumber, Goal, Plan, PasswordHash, Bool } from '@/domain/valueObjects'
-import { PlanningCommandRepository } from '@/infra/repositories'
+import { PlanningCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreatePlanning, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
 import { BadRequestError } from '@/presentation/exceptions'
@@ -97,6 +97,9 @@ export class CreatePlanningController {
       const planningParam = req.body
       console.log(planningParam)
       validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["userId", "name", "goal", "goalValue", "plan"])
+
+      const user = new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
+      if (!user) throw new BadRequestError("User not found")
 
       const createPlanning = new CreatePlanning(new PlanningCommandRepository())
 

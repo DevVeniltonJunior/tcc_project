@@ -1,7 +1,7 @@
 import { Password } from '@/domain/entities'
-import { CreatePassword } from '@/domain/usecases'
+import { CreatePassword, FindUser } from '@/domain/usecases'
 import { Id, DateEpoch, PasswordHash, Bool } from '@/domain/valueObjects'
-import { PasswordCommandRepository } from '@/infra/repositories'
+import { PasswordCommandRepository, UserCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreatePassword, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
 import { BadRequestError } from '@/presentation/exceptions'
@@ -56,6 +56,9 @@ export class CreatePasswordController {
       const passwordParam = req.body
 
       validateRequiredFields<TCreatePassword.Request.body>(passwordParam, ["userId", "password"])
+
+      const user = new FindUser(new UserQueryRepository()).execute({ id: passwordParam.userId })
+      if (!user) throw new BadRequestError("User not found")
 
       const createPassword = new CreatePassword(new PasswordCommandRepository())
 

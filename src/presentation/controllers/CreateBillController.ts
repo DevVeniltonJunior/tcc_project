@@ -1,7 +1,7 @@
 import { Bill } from '@/domain/entities'
-import { CreateBill } from '@/domain/usecases'
+import { CreateBill, FindUser } from '@/domain/usecases'
 import { Id, Name, DateEpoch, MoneyValue, Description, InstallmentsNumber } from '@/domain/valueObjects'
-import { BillCommandRepository } from '@/infra/repositories'
+import { BillCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreateBill, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
 import { BadRequestError } from '@/presentation/exceptions'
@@ -89,6 +89,9 @@ export class CreateBillController {
       const billParam = req.body
       console.log(billParam)
       validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "userId", "value"])
+
+      const user = new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})
+      if (!user) throw new BadRequestError("User not found")
 
       const createBill = new CreateBill(new BillCommandRepository())
 

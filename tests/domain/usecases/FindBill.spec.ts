@@ -10,7 +10,8 @@ describe("[Usecases] FindBill", () => {
 
   beforeEach(() => {
     repository = {
-      find: jest.fn()
+      find: jest.fn(),
+      get: jest.fn()
     } as unknown as jest.Mocked<IBillQueryRepository>
 
     usecase = new FindBill(repository)
@@ -24,12 +25,17 @@ describe("[Usecases] FindBill", () => {
       )
   })
 
-  it("should return all Bills when no filter is provided", async () => {
-    repository.find.mockResolvedValue(bill)
+  it("should throw an error when filter is not provided", async () => {
+    await expect(usecase.execute()).rejects.toThrow("At least one filter must be provided")
+  })
 
-    const result = await usecase.execute()
+  it("should return get a Bill by id", async () => {
+    repository.get.mockResolvedValue(bill)
+    const filter: TFilter<TBill.Model> = { id: Id.generate().toString() }
 
-    expect(repository.find).toHaveBeenCalled()
+    const result = await usecase.execute(filter)
+
+    expect(repository.get).toHaveBeenCalled()
     expect(result).toEqual(bill)
   })
 
@@ -46,6 +52,6 @@ describe("[Usecases] FindBill", () => {
   it("should propagate errors from the repository", async () => {
     repository.find.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute()).rejects.toThrow("DB error")
+    await expect(usecase.execute({name:"aoba"})).rejects.toThrow("DB error")
   })
 })

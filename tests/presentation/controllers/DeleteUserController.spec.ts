@@ -3,7 +3,7 @@ import { DeleteUser } from "@/domain/usecases"
 import { UserCommandRepository } from "@/infra/repositories"
 import { BadRequestError } from "@/presentation/exceptions"
 import { InvalidParam } from "@/domain/exceptions"
-import { Id } from "@/domain/valueObjects"
+import { Bool, Id } from "@/domain/valueObjects"
 
 describe("[Controller] DeleteUserController", () => {
   let usecaseSpy: jest.SpyInstance
@@ -28,7 +28,7 @@ describe("[Controller] DeleteUserController", () => {
 
     expect(result.statusCode).toBe(200)
     expect(result.data).toEqual({ message: "User deleted successfully" })
-    expect(usecaseSpy).toHaveBeenCalledWith(userId, false)
+    expect(usecaseSpy).toHaveBeenCalledWith(userId, new Bool(false))
   })
 
   it("should delete user permanently if query.permanent=true", async () => {
@@ -39,7 +39,7 @@ describe("[Controller] DeleteUserController", () => {
 
     expect(result.statusCode).toBe(200)
     expect(result.data).toEqual({ message: "User deleted successfully" })
-    expect(usecaseSpy).toHaveBeenCalledWith(userId, true)
+    expect(usecaseSpy).toHaveBeenCalledWith(userId, new Bool(true))
   })
 
   it("should return 400 if id is missing", async () => {

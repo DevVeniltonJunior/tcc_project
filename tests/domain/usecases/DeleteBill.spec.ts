@@ -1,7 +1,7 @@
 import { DeleteBill } from "@/domain/usecases"
 import { Bill } from "@/domain/entities"
 import { IBillCommandRepository } from "@/domain/protocols"
-import { Id } from "@/domain/valueObjects"
+import { Bool, Id } from "@/domain/valueObjects"
 import { BillDTO } from "@/domain/dtos"
 
 export class BillCommandRepositoryStub implements IBillCommandRepository {
@@ -36,16 +36,23 @@ describe("[Usecases] DeleteBill", () => {
     bill_id = Id.generate()
   })
 
-  it("should call repository.delete with the correct Bill dto", async () => {
-    const result = await usecase.execute(bill_id)
+  it("should call repository.softDelete with the correct Bill id", async () => {
+    const result = await usecase.execute(bill_id, new Bool(false))
 
     // Verify that repository.delete was called with the Bill dto
     expect(repository.softDelete).toHaveBeenCalledWith(bill_id)
   })
 
+  it("should call repository.hardDelete with the correct Bill id", async () => {
+    const result = await usecase.execute(bill_id, new Bool(true))
+
+    // Verify that repository.delete was called with the Bill dto
+    expect(repository.hardDelete).toHaveBeenCalledWith(bill_id)
+  })
+
   it("should propagate errors thrown by the repository", async () => {
     repository.softDelete.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute(bill_id)).rejects.toThrow("DB error")
+    await expect(usecase.execute(bill_id, new Bool(false))).rejects.toThrow("DB error")
   })
 })

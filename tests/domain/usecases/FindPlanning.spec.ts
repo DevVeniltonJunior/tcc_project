@@ -10,7 +10,8 @@ describe("[Usecases] FindPlanning", () => {
 
   beforeEach(() => {
     repository = {
-      find: jest.fn()
+      find: jest.fn(),
+      get: jest.fn()
     } as unknown as jest.Mocked<IPlanningQueryRepository>
 
     usecase = new FindPlanning(repository)
@@ -26,12 +27,12 @@ describe("[Usecases] FindPlanning", () => {
       )
   })
 
-  it("should return all Plannings when no filter is provided", async () => {
-    repository.find.mockResolvedValue(planning)
+  it("should get a Planning per id", async () => {
+    repository.get.mockResolvedValue(planning)
 
-    const result = await usecase.execute()
+    const result = await usecase.execute({id: Id.generate().toString()})
 
-    expect(repository.find).toHaveBeenCalled()
+    expect(repository.get).toHaveBeenCalled()
     expect(result).toEqual(planning)
   })
 
@@ -48,6 +49,12 @@ describe("[Usecases] FindPlanning", () => {
   it("should propagate errors from the repository", async () => {
     repository.find.mockRejectedValue(new Error("DB error"))
 
-    await expect(usecase.execute()).rejects.toThrow("DB error")
+    await expect(usecase.execute({name:"aobs"})).rejects.toThrow("DB error")
+  })
+
+  it("should throw an error when filter is not provided", async () => {
+    repository.find.mockRejectedValue(new Error("At least one filter must be provided"))
+
+    await expect(usecase.execute()).rejects.toThrow("At least one filter must be provided")
   })
 })

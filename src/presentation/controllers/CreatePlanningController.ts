@@ -96,7 +96,7 @@ export class CreatePlanningController {
   public static async handle(req: TRoute.handleParams<TCreatePlanning.Request.body, TCreatePlanning.Request.params, TCreatePlanning.Request.query>): Promise<Response<TCreatePlanning.Response>> {
     try {
       const planningParam = req.body
-      console.log(planningParam)
+      
       validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["userId", "name", "goal", "goalValue", "plan"])
 
       const user = await new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })

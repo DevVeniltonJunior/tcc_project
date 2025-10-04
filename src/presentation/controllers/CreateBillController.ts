@@ -88,7 +88,7 @@ export class CreateBillController {
   public static async handle(req: TRoute.handleParams<TCreateBill.Request.body, TCreateBill.Request.params, TCreateBill.Request.query>): Promise<Response<TCreateBill.Response>> {
     try {
       const billParam = req.body
-      console.log(billParam)
+      
       validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "userId", "value"])
 
       const user = await new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})

@@ -215,7 +215,7 @@ export class CreateUserController {
   public static async handle(req: TRoute.handleParams<TCreateUser.Request.body, TCreateUser.Request.params, TCreateUser.Request.query>): Promise<Response<TCreateUser.Response>> {
     try {
       const userParam = req.body
-      console.log(userParam)
+      
       validateRequiredFields<TCreateUser.Request.body>(userParam, ["name", "birthdate", "email"])
 
       const createUser = new CreateUser(new UserCommandRepository())

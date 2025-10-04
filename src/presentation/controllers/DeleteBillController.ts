@@ -1,9 +1,10 @@
-import { DeleteBill } from '@/domain/usecases'
+import { DeleteBill, FindBill } from '@/domain/usecases'
 import { Bool, Id } from '@/domain/valueObjects'
-import { BillCommandRepository } from '@/infra/repositories'
+import { BillCommandRepository, BillQueryRepository } from '@/infra/repositories'
 import { TDeleteBill, TRoute, Response } from '@/presentation/protocols'
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class DeleteBillController {
   /**
@@ -55,6 +56,9 @@ export class DeleteBillController {
 
       if (!id) throw new BadRequestError("Mising required parameter: Id")
 
+      const bill = await new FindBill(new BillQueryRepository()).execute({ id: id })
+      if (!bill) throw new NotFoundError("User not found")
+
       const deleteBill = new DeleteBill(new BillCommandRepository())
 
       await deleteBill.execute(new Id(id), new Bool(isPermanent))
@@ -66,6 +70,11 @@ export class DeleteBillController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "Bill not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

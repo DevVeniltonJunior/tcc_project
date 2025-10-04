@@ -1,11 +1,12 @@
-import { UpdateBill } from '@/domain/usecases'
+import { FindBill, UpdateBill } from '@/domain/usecases'
 import { Id, Name, MoneyValue, Description, InstallmentsNumber } from '@/domain/valueObjects'
-import { BillCommandRepository } from '@/infra/repositories'
+import { BillCommandRepository, BillQueryRepository } from '@/infra/repositories'
 import { TUpdateBill, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { BillDTO } from '@/domain/dtos'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class UpdateBillController {
   /**
@@ -66,6 +67,9 @@ export class UpdateBillController {
     try {
       const billParam = req.body
       validateRequiredFields<TUpdateBill.Request.body>(billParam, ["id"])
+
+      const bill = await new FindBill(new BillQueryRepository()).execute({ id: billParam.id })
+      if (!bill) throw new NotFoundError("Bill not found")
       
       const updateBill = new UpdateBill(new BillCommandRepository())
       
@@ -84,6 +88,11 @@ export class UpdateBillController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "Bill not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

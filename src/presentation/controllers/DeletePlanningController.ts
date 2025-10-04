@@ -1,9 +1,10 @@
-import { DeletePlanning } from '@/domain/usecases'
+import { DeletePlanning, FindPlanning } from '@/domain/usecases'
 import { Bool, Id } from '@/domain/valueObjects'
-import { PlanningCommandRepository } from '@/infra/repositories'
+import { PlanningCommandRepository, PlanningQueryRepository } from '@/infra/repositories'
 import { TDeletePlanning, TRoute, Response } from '@/presentation/protocols'
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class DeletePlanningController {
   /**
@@ -55,6 +56,9 @@ export class DeletePlanningController {
 
       if (!id) throw new BadRequestError("Mising required parameter: Id")
 
+      const planning = await new FindPlanning(new PlanningQueryRepository()).execute({ id: id })
+      if (!planning) throw new NotFoundError("Planning not found")
+
       const deletePlanning = new DeletePlanning(new PlanningCommandRepository())
 
       await deletePlanning.execute(new Id(id), new Bool(isPermanent))
@@ -66,6 +70,11 @@ export class DeletePlanningController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "Planning not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

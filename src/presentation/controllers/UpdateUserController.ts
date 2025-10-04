@@ -1,11 +1,12 @@
-import { UpdateUser } from '@/domain/usecases'
+import { FindUser, UpdateUser } from '@/domain/usecases'
 import { Id, Name, Email, DateEpoch, MoneyValue } from '@/domain/valueObjects'
-import { UserCommandRepository } from '@/infra/repositories'
+import { UserCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TUpdateUser, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { UserDTO } from '@/domain/dtos'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class UpdateUserController {
   /**
@@ -67,6 +68,9 @@ export class UpdateUserController {
     try {
       const userParam = req.body
       validateRequiredFields<TUpdateUser.Request.body>(userParam, ["id"])
+
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userParam.id })
+      if (!user) throw new NotFoundError("User not found")
       
       const updateUser = new UpdateUser(new UserCommandRepository())
       
@@ -85,6 +89,11 @@ export class UpdateUserController {
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

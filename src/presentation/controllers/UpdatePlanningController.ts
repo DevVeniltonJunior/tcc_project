@@ -1,11 +1,12 @@
-import { UpdatePlanning } from '@/domain/usecases'
+import { FindPlanning, UpdatePlanning } from '@/domain/usecases'
 import { Id, Name, MoneyValue, Description, InstallmentsNumber, Goal, Plan } from '@/domain/valueObjects'
-import { PlanningCommandRepository } from '@/infra/repositories'
+import { PlanningCommandRepository, PlanningQueryRepository } from '@/infra/repositories'
 import { TUpdatePlanning, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { PlanningDTO } from '@/domain/dtos'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class UpdatePlanningController {
   /**
@@ -70,6 +71,9 @@ export class UpdatePlanningController {
     try {
       const planningParam = req.body
       validateRequiredFields<TUpdatePlanning.Request.body>(planningParam, ["id"])
+
+      const planning = await new FindPlanning(new PlanningQueryRepository()).execute({ id: planningParam.id })
+      if (!planning) throw new NotFoundError("Planning not found")
       
       const updatePlanning = new UpdatePlanning(new PlanningCommandRepository())
       
@@ -91,6 +95,11 @@ export class UpdatePlanningController {
         statusCode: 400,
         data: { error: err.message }
       }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "Planning not found")) return {
+              statusCode: 404,
+              data: { error: err.message }
+            }
 
       return {
         statusCode: 500,

@@ -1,10 +1,7 @@
 import 'module-alias/register'
 import { Router, Request, Response } from 'express'
-import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning } from '@/presentation/protocols'
-import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController } from '@/presentation/controllers'
-import { CreateBillController } from '@/presentation/controllers/CreateBillController'
-import { UpdateBillController } from '@/presentation/controllers/UpdateBillController'
-import { DeleteBillController } from '@/presentation/controllers/DeleteBillController'
+import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword } from '@/presentation/protocols'
+import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController } from '@/presentation/controllers'
 
 export const router = Router()
 
@@ -44,6 +41,11 @@ router.get('/users', async (req: Request<any, any, any, TListUser.Request.query>
 
 router.post('/password', async (req: Request<any, any, any, TCreatePassword.Request.body>, res: Response) => {
   const response = await CreatePasswordController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/forgot-password', async (req: Request<any, any, any, TForgotPassword.Request.query>, res: Response) => {
+  const response = await ForgotPasswordController.handle(req)
   res.status(response.statusCode).json(response.data)
 })
 

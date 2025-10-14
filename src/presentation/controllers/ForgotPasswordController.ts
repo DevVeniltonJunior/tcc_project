@@ -1,20 +1,20 @@
-import { DeleteUser, FindUser } from '@/domain/usecases'
-import { Id, Bool } from '@/domain/valueObjects'
-import { UserCommandRepository, UserQueryRepository } from '@/infra/repositories'
-import { TDeleteUser, TRoute, Response } from '@/presentation/protocols'
+import { FindUser, ForgotPassword } from '@/domain/usecases'
+import { UserQueryRepository } from '@/infra/repositories'
+import { TRoute, Response, TForgotPassword } from '@/presentation/protocols'
 import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { DatabaseException } from '@/infra/exceptions'
+import { EmailService, TokenService } from '@/infra/utils'
 
 export class ForgotPasswordController {
   /**
    * @swagger
-   * /password:
+   * /forgot-password:
    *   post:
-   *     summary: Reset user's password
+   *     summary: Send email to reset password
    *     tags: [Password]
    *     parameters:
-   *       - in: path
+   *       - in: query
    *         name: email
    *         schema:
    *           type: string
@@ -23,42 +23,46 @@ export class ForgotPasswordController {
    *         example: "jane_doe@email.com"
    *     responses:
    *       200:
-   *         description: "Sended email to reset password"
+   *         description: "Sent email to reset password"
    *         content:
    *           application/json:
    *             example:
-   *               message: "Email sended"
+   *               message: "Email sent successfully"
+   *       400:
+   *         description: Bad Request
+   *         content:
+   *           application/json:
+   *             example:
+   *               error: "Missing required parameter: email"
+   *       404:
+   *         description: User not found
+   *         content:
+   *           application/json:
+   *             example:
+   *               error: "User not found"
    *       500:
    *         description: Internal Server Error
    *         content:
    *           application/json:
    *             example:
    *               error: "Internal Server Error"
-   *       400:
-   *         description: Bad Request
-   *         content:
-   *           application/json:
-   *             example:
-   *               error: "Mising required parameter: id"
    */
-  public static async handle(req: TRoute.handleParams<TDeleteUser.Request.body, TDeleteUser.Request.params, TDeleteUser.Request.query>): Promise<Response<TDeleteUser.Response>> {
+  public static async handle(req: TRoute.handleParams<TForgotPassword.Request.body, TForgotPassword.Request.params, TForgotPassword.Request.query>): Promise<Response<TForgotPassword.Response>> {
     try {
-      const id = req.params.id
-      const permanent = req.query.permanent
-      const isPermanent = permanent ? permanent === "true" : false
+      const email = req.query.email
 
-      if (!id) throw new BadRequestError("Mising required parameter: Id")
+      if (!email) throw new BadRequestError("Missing required parameter: email")
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: id })
+      const user = await new FindUser(new UserQueryRepository()).execute({ email: email })
       if (!user) throw new NotFoundError("User not found")
 
-      const deleteUser = new DeleteUser(new UserCommandRepository())
+      const forgotPassword = new ForgotPassword(new TokenService(), new EmailService())
 
-      await deleteUser.execute(new Id(id), new Bool(isPermanent))
+      await forgotPassword.execute(user)
   
       return {
         statusCode: 200,
-        data: { message: 'User deleted successfully' }
+        data: { message: 'Email sent successfully' }
       }
     } catch(err: any) {
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {

@@ -1,9 +1,9 @@
-export namespace TDeactivatePassword {
+export namespace TForgotPassword {
   export namespace Request {
     export type params = object
     export type body = object
     export type query = {
-      id: string
+      email: string
     }
   }
   export type Response = any

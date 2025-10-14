@@ -1,7 +1,7 @@
 import 'module-alias/register'
 import { Router, Request, Response } from 'express'
-import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword } from '@/presentation/protocols'
-import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController } from '@/presentation/controllers'
+import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword } from '@/presentation/protocols'
+import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController } from '@/presentation/controllers'
 
 export const router = Router()
 
@@ -46,6 +46,11 @@ router.post('/password', async (req: Request<any, any, any, TCreatePassword.Requ
 
 router.post('/forgot-password', async (req: Request<any, any, any, TForgotPassword.Request.query>, res: Response) => {
   const response = await ForgotPasswordController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/reset-password', async (req: Request<any, any, TResetPassword.Request.body, TResetPassword.Request.query>, res: Response) => {
+  const response = await ResetPasswordController.handle(req)
   res.status(response.statusCode).json(response.data)
 })
 

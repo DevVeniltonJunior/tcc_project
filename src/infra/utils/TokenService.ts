@@ -70,4 +70,9 @@ export class TokenService {
       return false
     }
   }
+
+  public getUserIdFromToken(token: string): Id {
+    const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload
+    return new Id(decoded.userId)
+  }
 }

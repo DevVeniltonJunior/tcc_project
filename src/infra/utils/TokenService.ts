@@ -1,87 +1,73 @@
-// passwordResetTokenService.ts
-import bcrypt from "bcrypt";
-import { Id } from "@/domain/valueObjects";
-import { randomBytes } from "crypto";
+import jwt from "jsonwebtoken"
+import { randomBytes } from "crypto"
+import { Id } from "@/domain/valueObjects"
 
-interface PasswordResetToken {
-  id: string;
-  userIdentifier: string;
-  tokenHash: string;
-  expiresAt: Date;
-  used: boolean;
-  createdAt: Date;
+export interface TokenServiceConfig {
+  tokenExpireHours?: number
+  jwtSecret?: string
 }
 
-// repositório em memória apenas para exemplo
-class InMemoryTokenRepo {
-  private tokens: PasswordResetToken[] = [];
-
-  async create(token: PasswordResetToken) {
-    this.tokens.push(token);
-  }
-
-  async invalidateAllForUser(userIdentifier: string) {
-    this.tokens = this.tokens.map(t =>
-      t.userIdentifier === userIdentifier ? { ...t, used: true } : t
-    );
-  }
-
-  // opcional para testes
-  async findByTokenHash(tokenHash: string) {
-    return this.tokens.find(t => t.tokenHash === tokenHash);
-  }
+interface TokenPayload {
+  userId: string
+  createdAt: number
 }
 
-export class PasswordResetTokenService {
-  private tokenRepo = new InMemoryTokenRepo();
-  private TOKEN_EXPIRE_HOURS = 1;
-  private BCRYPT_SALT_ROUNDS = 12;
+export class TokenService {
+  private readonly TOKEN_EXPIRE_HOURS: number
+  private readonly JWT_SECRET: string
 
-  // gera token randomico em hexadecimal
-  private generateToken(size = 32): string {
-    return randomBytes(size).toString("hex");
+  constructor(config: TokenServiceConfig = {}) {
+    this.TOKEN_EXPIRE_HOURS = config.tokenExpireHours ?? 24
+    this.JWT_SECRET = config.jwtSecret ?? this.generateDefaultSecret()
   }
 
-  // calcula expiração
-  private expiresInHours(hours: number): Date {
-    const d = new Date();
-    d.setHours(d.getHours() + hours);
-    return d;
+  private generateDefaultSecret(): string {
+    return process.env.JWT_PASSWORD_RESET_SECRET ?? randomBytes(32).toString("hex")
   }
 
-  /**
-   * Gera token de reset para um usuário (email ou username)
-   * Retorna o token em texto puro para enviar por e-mail
-   */
-  public async generateTokenForUser(userIdentifier: string): Promise<string> {
-    // invalida tokens antigos
-    await this.tokenRepo.invalidateAllForUser(userIdentifier);
-
-    const tokenPlain = this.generateToken();
-    const tokenHash = await bcrypt.hash(tokenPlain, this.BCRYPT_SALT_ROUNDS);
-
-    await this.tokenRepo.create({
-      id: Id.generate().toString(),
-      userIdentifier,
-      tokenHash,
-      expiresAt: this.expiresInHours(this.TOKEN_EXPIRE_HOURS),
-      used: false,
-      createdAt: new Date(),
-    });
-
-    return tokenPlain; // ESTE É O TOKEN QUE VOCÊ ENVIA POR E-MAIL
-  }
-
-  /**
-   * Valida token recebido do usuário
-   */
-  public async validateToken(userIdentifier: string, tokenPlain: string): Promise<boolean> {
-    const tokens = this.tokenRepo['tokens'].filter(t => t.userIdentifier === userIdentifier && !t.used);
-    for (const t of tokens) {
-      if (t.expiresAt.getTime() < Date.now()) continue;
-      const match = await bcrypt.compare(tokenPlain, t.tokenHash);
-      if (match) return true;
+  public generateTokenForUser(userId: Id): string {
+    if (!userId || userId.toString().trim() === "") {
+      throw new Error("User identifier cannot be empty")
     }
-    return false;
+
+    const payload: TokenPayload = {
+      userId: userId.toString(),
+      createdAt: Date.now(),
+    }
+
+    const token = jwt.sign(payload, this.JWT_SECRET, {
+      expiresIn: `${this.TOKEN_EXPIRE_HOURS}h`,
+    })
+
+    return token
+  }
+
+  public validateToken(
+    userId: Id,
+    token: string
+  ): boolean {
+    if (!userId || !token) {
+      return false
+    }
+
+    try {
+
+      const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload
+
+      if (decoded.userId !== userId.toString()) {
+        return false
+      }
+
+      const now = Date.now()
+      const hoursPassed = (now - decoded.createdAt) / (1000 * 60 * 60)
+
+      if (hoursPassed > this.TOKEN_EXPIRE_HOURS) {
+        return false
+      }
+
+      return true
+    } catch (error) {
+      return false
+    }
   }
 }

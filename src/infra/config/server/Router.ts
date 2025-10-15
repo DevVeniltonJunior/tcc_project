@@ -1,7 +1,7 @@
 import 'module-alias/register'
 import { Router, Request, Response } from 'express'
-import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword, TRegister } from '@/presentation/protocols'
-import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController, RegisterController } from '@/presentation/controllers'
+import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword, TRegister, TLogin } from '@/presentation/protocols'
+import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController, RegisterController, LoginController } from '@/presentation/controllers'
 
 export const router = Router()
 
@@ -16,6 +16,11 @@ router.get('/hello', (req, res) => {
 
 router.post('/register', async (req: Request<any, any, any, TRegister.Request.body>, res: Response) => {
   const response = await RegisterController.handle(req)
+  res.status(response.statusCode).json(response.data)
+})
+
+router.post('/login', async (req: Request<any, any, any, TLogin.Request.body>, res: Response) => {
+  const response = await LoginController.handle(req)
   res.status(response.statusCode).json(response.data)
 })
 

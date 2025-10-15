@@ -3,5 +3,6 @@ export namespace TRoute {
     body: B
     params: P
     query: Q
+    userId?: string
   }
 }

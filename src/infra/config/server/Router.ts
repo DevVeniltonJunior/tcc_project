@@ -2,6 +2,7 @@ import 'module-alias/register'
 import { Router, Request, Response } from 'express'
 import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword, TRegister, TLogin } from '@/presentation/protocols'
 import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController, RegisterController, LoginController } from '@/presentation/controllers'
+import { AuthMiddleware, AuthenticatedRequest } from '@/presentation/middlewares'
 
 export const router = Router()
 
@@ -24,33 +25,34 @@ router.post('/login', async (req: Request<any, any, any, TLogin.Request.body>, r
   res.status(response.statusCode).json(response.data)
 })
 
-router.post('/users', async (req: Request<any, any, any, TCreateUser.Request.body>, res: Response) => {
-  const response = await CreateUserController.handle(req)
+// Protected routes - require authentication
+router.post('/users', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await CreateUserController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.put('/users', async (req: Request<any, any, any, TUpdateUser.Request.body>, res: Response) => {
-  const response = await UpdateUserController.handle(req)
+router.put('/users', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await UpdateUserController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.delete('/users/:id', async (req: Request<any, any, any, TDeleteUser.Request.query>, res: Response) => {
-  const response = await DeleteUserController.handle(req)
+router.delete('/users/:id', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await DeleteUserController.handle({ body: req.body, params: req.params as any, query: req.query as any, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/user', async (req: Request<any, any, any, TFindUser.Request.query>, res: Response) => {
-  const response = await FindUserController.handle(req)
+router.get('/user', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await FindUserController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/users', async (req: Request<any, any, any, TListUser.Request.query>, res: Response) => {
-  const response = await ListUserController.handle(req)
+router.get('/users', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await ListUserController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.post('/password', async (req: Request<any, any, any, TCreatePassword.Request.body>, res: Response) => {
-  const response = await CreatePasswordController.handle(req)
+router.post('/password', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await CreatePasswordController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
@@ -64,52 +66,52 @@ router.post('/reset-password', async (req: Request<any, any, TResetPassword.Requ
   res.status(response.statusCode).json(response.data)
 })
 
-router.post('/bills', async (req: Request<any, any, any, TCreateBill.Request.body>, res: Response) => {
-  const response = await CreateBillController.handle(req)
+router.post('/bills', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await CreateBillController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.put('/bills', async (req: Request<any, any, any, TUpdateBill.Request.body>, res: Response) => {
-  const response = await UpdateBillController.handle(req)
+router.put('/bills', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await UpdateBillController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.delete('/bills/:id', async (req: Request<any, any, any, TDeleteBill.Request.query>, res: Response) => {
-  const response = await DeleteBillController.handle(req)
+router.delete('/bills/:id', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await DeleteBillController.handle({ body: req.body, params: req.params as any, query: req.query as any, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/bill', async (req: Request<any, any, any, TFindBill.Request.query>, res: Response) => {
-  const response = await FindBillController.handle(req)
+router.get('/bill', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await FindBillController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/bills', async (req: Request<any, any, any, TListBill.Request.query>, res: Response) => {
-  const response = await ListBillController.handle(req)
+router.get('/bills', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await ListBillController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.post('/plannings', async (req: Request<any, any, any, TCreatePlanning.Request.body>, res: Response) => {
-  const response = await CreatePlanningController.handle(req)
+router.post('/plannings', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await CreatePlanningController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.put('/plannings', async (req: Request<any, any, any, TUpdatePlanning.Request.body>, res: Response) => {
-  const response = await UpdatePlanningController.handle(req)
+router.put('/plannings', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await UpdatePlanningController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.delete('/plannings/:id', async (req: Request<any, any, any, TDeletePlanning.Request.query>, res: Response) => {
-  const response = await DeletePlanningController.handle(req)
+router.delete('/plannings/:id', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await DeletePlanningController.handle({ body: req.body, params: req.params as any, query: req.query as any, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/planning', async (req: Request<any, any, any, TFindPlanning.Request.query>, res: Response) => {
-  const response = await FindPlanningController.handle(req)
+router.get('/planning', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await FindPlanningController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 
-router.get('/plannings', async (req: Request<any, any, any, TListPlanning.Request.query>, res: Response) => {
-  const response = await ListPlanningController.handle(req)
+router.get('/plannings', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await ListPlanningController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })

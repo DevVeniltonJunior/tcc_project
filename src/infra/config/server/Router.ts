@@ -1,7 +1,7 @@
 import 'module-alias/register'
 import { Router, Request, Response } from 'express'
-import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword } from '@/presentation/protocols'
-import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController } from '@/presentation/controllers'
+import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TForgotPassword, TResetPassword, TRegister } from '@/presentation/protocols'
+import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController, RegisterController } from '@/presentation/controllers'
 
 export const router = Router()
 
@@ -12,6 +12,11 @@ router.use((req, res, next) => {
 
 router.get('/hello', (req, res) => {
   res.send({'message': 'Hello, Cognum!'})
+})
+
+router.post('/register', async (req: Request<any, any, any, TRegister.Request.body>, res: Response) => {
+  const response = await RegisterController.handle(req)
+  res.status(response.statusCode).json(response.data)
 })
 
 router.post('/users', async (req: Request<any, any, any, TCreateUser.Request.body>, res: Response) => {

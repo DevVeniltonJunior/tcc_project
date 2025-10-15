@@ -19,7 +19,31 @@ export class UserCommandRepository implements IUserCommandRepository {
     try {
       const model = UserAdapter.toModel(entity)
 
-      const createdUser = await this._db.create({ data: model })
+      const password = model.password
+      delete model.password
+      const bills = model.bills
+      delete model.bills
+      const planning = model.planning
+      delete model.planning
+
+      const data: any = {
+        ...model,
+      }
+
+      if (password) {
+        delete (<any>password).userId
+        data.password = { create: password }
+      }
+      if (bills) {
+        delete (<any>bills).userId
+        data.bills = { create: bills }
+      }
+      if (planning) {
+        delete (<any>planning).userId
+        data.planings = { create: planning }
+      }
+
+      const createdUser = await this._db.create({ data: data, include: { password: true, bills: true, planings: true } })
 
       return UserAdapter.toEntity(createdUser)
     }

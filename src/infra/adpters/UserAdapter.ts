@@ -21,13 +21,10 @@ export class UserAdapter {
   }
 
   public static toModel(entity: User): TUser.Model {
-    const json_entity = entity.toJson()
-    const { password, bills, planning, ...model } = json_entity
-
-    return model
+    return entity.toJson()
   }
 
-  public static toPartialModel(dto: UserDTO): Partial<TUser.Model> {
+  public static toPartialModel(dto: UserDTO): Partial<Omit<TUser.Model, "password" | "bills" | "planning">> {
     return dto.toJson()
   }
 

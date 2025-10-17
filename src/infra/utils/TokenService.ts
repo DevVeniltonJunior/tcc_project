@@ -1,16 +1,7 @@
 import jwt from "jsonwebtoken"
 import { randomBytes } from "crypto"
 import { Id } from "@/domain/valueObjects"
-
-export interface TokenServiceConfig {
-  tokenExpireHours?: number
-  jwtSecret?: string
-}
-
-interface TokenPayload {
-  userId: string
-  createdAt: number
-}
+import { TokenServiceConfig, TokenPayload } from "@/infra/protocols"
 
 export class TokenService {
   private readonly TOKEN_EXPIRE_HOURS: number

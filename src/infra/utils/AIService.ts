@@ -1,32 +1,6 @@
 import https from "https"
 import { ServiceException } from "@/infra/exceptions"
-
-export interface AIResponse {
-  text: string
-  model: string
-  usage?: {
-    prompt_tokens?: number
-    completion_tokens?: number
-    total_tokens?: number
-  }
-}
-
-interface OpenRouterResponse {
-  id: string
-  model: string
-  choices: Array<{
-    message: {
-      role: string
-      content: string
-    }
-    finish_reason: string
-  }>
-  usage?: {
-    prompt_tokens?: number
-    completion_tokens?: number
-    total_tokens?: number
-  }
-}
+import { OpenRouterResponse, JSONSchema, AIStructuredResponse, AIResponse } from "@/infra/protocols"
 
 export class AIService {
   private readonly apiKey: string
@@ -62,6 +36,70 @@ export class AIService {
 
       throw new ServiceException(
         `Failed to generate AI response: ${(error as Error).message}`
+      )
+    }
+  }
+
+  async generateStructured<T = any>(
+    prompt: string,
+    schema: JSONSchema,
+    model: string = this.defaultModel
+  ): Promise<AIStructuredResponse<T>> {
+    if (!prompt || prompt.trim().length === 0) {
+      throw new ServiceException("Prompt cannot be empty")
+    }
+
+    if (!schema || typeof schema !== "object") {
+      throw new ServiceException("Valid JSON schema is required")
+    }
+
+    try {
+      const data = await this.makeRequest({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "structured_response",
+            strict: true,
+            schema: schema,
+          },
+        },
+      })
+
+      if (!this.isValidResponse(data)) {
+        throw new ServiceException("Invalid response format from OpenRouter API")
+      }
+
+      const content = data.choices[0].message.content
+      let parsedData: T
+
+      try {
+        parsedData = JSON.parse(content)
+      } catch (error) {
+        throw new ServiceException(
+          `Failed to parse structured response as JSON: ${(error as Error).message}`
+        )
+      }
+
+      return {
+        data: parsedData,
+        model: data.model,
+        usage: data.usage
+          ? {
+              prompt_tokens: data.usage.prompt_tokens,
+              completion_tokens: data.usage.completion_tokens,
+              total_tokens: data.usage.total_tokens,
+            }
+          : undefined,
+      }
+    } catch (error) {
+      if (error instanceof ServiceException) {
+        throw error
+      }
+
+      throw new ServiceException(
+        `Failed to generate structured AI response: ${(error as Error).message}`
       )
     }
   }

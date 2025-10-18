@@ -15,6 +15,8 @@ export class UpdatePlanningController {
    *   put:
    *     summary: Update Planning
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -70,10 +72,18 @@ export class UpdatePlanningController {
   public static async handle(req: TRoute.handleParams<TUpdatePlanning.Request.body, TUpdatePlanning.Request.params, TUpdatePlanning.Request.query>): Promise<Response<TUpdatePlanning.Response>> {
     try {
       const planningParam = req.body
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
       validateRequiredFields<TUpdatePlanning.Request.body>(planningParam, ["id"])
 
       const planning = await new FindPlanning(new PlanningQueryRepository()).execute({ id: planningParam.id })
       if (!planning) throw new NotFoundError("Planning not found")
+      
+      // Security check: ensure the planning belongs to the authenticated user
+      if (planning.getUserId().toString() !== userId) {
+        throw new BadRequestError("You don't have permission to update this planning")
+      }
       
       const updatePlanning = new UpdatePlanning(new PlanningCommandRepository())
       

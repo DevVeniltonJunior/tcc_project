@@ -9,10 +9,12 @@ import { DatabaseException } from '@/infra/exceptions'
 export class DeleteBillController {
   /**
    * @swagger
-   * /bills:
+   * /bills/{id}:
    *   delete:
    *     summary: Delete Bill
    *     tags: [Bills]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -52,12 +54,19 @@ export class DeleteBillController {
     try {
       const id = req.params.id
       const permanent = req.query.permanent
+      const userId = req.userId
       const isPermanent = permanent ? permanent === "true" : false
 
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
       if (!id) throw new BadRequestError("Mising required parameter: Id")
 
       const bill = await new FindBill(new BillQueryRepository()).execute({ id: id })
       if (!bill) throw new NotFoundError("Bill not found")
+      
+      // Security check: ensure the bill belongs to the authenticated user
+      if (bill.getUserId().toString() !== userId) {
+        throw new BadRequestError("You don't have permission to delete this bill")
+      }
 
       const deleteBill = new DeleteBill(new BillCommandRepository())
 

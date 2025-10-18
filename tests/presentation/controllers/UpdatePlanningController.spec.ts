@@ -3,18 +3,20 @@ import { FindPlanning, UpdatePlanning } from "@/domain/usecases"
 import { PlanningCommandRepository } from "@/infra/repositories"
 import { InvalidParam } from "@/domain/exceptions"
 import { BadRequestError } from "@/presentation/exceptions"
-import { DateEpoch, Email, Id, MoneyValue, Name } from "@/domain/valueObjects"
-import { User } from "@/domain/entities"
+import { DateEpoch, Description, Email, Goal, Id, MoneyValue, Name, Plan } from "@/domain/valueObjects"
+import { Planning, User } from "@/domain/entities"
 
 describe("[Controller] UpdatePlanningController", () => {
   let usecaseSpy: jest.SpyInstance
   let queryUsecaseSpy: jest.SpyInstance
   let user: User
+  let planning: Planning
 
-  const makeRequest = (body: any = {}) => ({
+  const makeRequest = (body: any = {}, userId?: string) => ({
     body,
     params: {},
-    query: {}
+    query: {},
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -32,6 +34,17 @@ describe("[Controller] UpdatePlanningController", () => {
       new MoneyValue(2500)
     )
 
+    planning = new Planning(
+      Id.generate(),
+      user.getId(),
+      new Name("Car"),
+      new Goal("Mazda Miata"),
+      new MoneyValue(90000.00),
+      new Plan("Save money"),
+      new DateEpoch(Date.now()),
+      new Description("Buy a car")
+    )
+
     queryUsecaseSpy = jest.spyOn(FindPlanning.prototype, "execute")
     usecaseSpy = jest.spyOn(UpdatePlanning.prototype, "execute").mockResolvedValue(undefined)
     // Evita instância real de repositório
@@ -39,12 +52,12 @@ describe("[Controller] UpdatePlanningController", () => {
   })
 
   it("should update Planning successfully", async () => {
-    queryUsecaseSpy.mockResolvedValue(user)
+    queryUsecaseSpy.mockResolvedValue(planning)
 
     const req = makeRequest({
-      id: Id.generate(),
-      name: "Jane Doe"
-    })
+      id: planning.getId().toString(),
+      name: "Updated Car"
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 
@@ -54,11 +67,11 @@ describe("[Controller] UpdatePlanningController", () => {
   })
 
   it("should return 400 if required field id is missing", async () => {
-    queryUsecaseSpy.mockResolvedValue(user)
+    queryUsecaseSpy.mockResolvedValue(planning)
 
     const req = makeRequest({
-      name: "Jane Doe"
-    })
+      name: "Updated Car"
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 
@@ -69,12 +82,12 @@ describe("[Controller] UpdatePlanningController", () => {
 
   it("should return 400 if InvalidParam is thrown", async () => {
     usecaseSpy.mockRejectedValueOnce(new InvalidParam("email"))
-    queryUsecaseSpy.mockResolvedValue(user)
+    queryUsecaseSpy.mockResolvedValue(planning)
 
     const req = makeRequest({
       id: 4,
-      name: "Jane Doe"
-    })
+      name: "Updated Car"
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 
@@ -84,12 +97,12 @@ describe("[Controller] UpdatePlanningController", () => {
 
   it("should return 400 if BadRequestError is thrown", async () => {
     usecaseSpy.mockRejectedValueOnce(new BadRequestError("Invalid data"))
-    queryUsecaseSpy.mockResolvedValue(user)
+    queryUsecaseSpy.mockResolvedValue(planning)
 
     const req = makeRequest({
-      id: Id.generate(),
+      id: planning.getId().toString(),
       goalValue: 100
-    })
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 
@@ -101,7 +114,7 @@ describe("[Controller] UpdatePlanningController", () => {
     const req = makeRequest({
       id: Id.generate().toString(),
       name: "Internet"
-    })
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 
@@ -110,13 +123,13 @@ describe("[Controller] UpdatePlanningController", () => {
   })
 
   it("should return 500 if unexpected error is thrown", async () => {
-    queryUsecaseSpy.mockResolvedValue(user)
+    queryUsecaseSpy.mockResolvedValue(planning)
     usecaseSpy.mockRejectedValueOnce(new Error("Database crash"))
 
     const req = makeRequest({
-      id: Id.generate(),
-      name: "Jane Doe"
-    })
+      id: planning.getId().toString(),
+      name: "Updated Car"
+    }, user.getId().toString())
 
     const result = await UpdatePlanningController.handle(req)
 

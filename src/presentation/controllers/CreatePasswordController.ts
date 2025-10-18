@@ -12,10 +12,12 @@ import { DatabaseException } from '@/infra/exceptions'
 export class CreatePasswordController {
   /**
    * @swagger
-   * /create-password:
+   * /password:
    *   post:
    *     summary: Create Password
    *     tags: [Password]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -23,12 +25,8 @@ export class CreatePasswordController {
    *           schema:
    *             type: object
    *             required:
-   *               - userId
    *               - password
    *             properties:
-   *                   userId:
-   *                     type: string
-   *                     example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
    *                   password:
    *                     type: string
    *                     example: "12345678"
@@ -55,17 +53,19 @@ export class CreatePasswordController {
   public static async handle(req: TRoute.handleParams<TCreatePassword.Request.body, TCreatePassword.Request.params, TCreatePassword.Request.query>): Promise<Response<TCreatePassword.Response>> {
     try {
       const passwordParam = req.body
+      const userId = req.userId
 
-      validateRequiredFields<TCreatePassword.Request.body>(passwordParam, ["userId", "password"])
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      validateRequiredFields<TCreatePassword.Request.body>(passwordParam, ["password"])
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: passwordParam.userId })
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userId })
       if (!user) throw new NotFoundError("User not found")
 
       const createPassword = new CreatePassword(new PasswordCommandRepository())
 
       await createPassword.execute(new Password(
           Id.generate(),
-          new Id(passwordParam.userId),
+          new Id(userId),
           new PasswordHash(await PasswordHasher.encrypt(passwordParam.password)),
           new Bool(true),
           new DateEpoch(new Date())

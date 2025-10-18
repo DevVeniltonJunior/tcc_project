@@ -15,18 +15,15 @@ export class UpdateUserController {
    *   put:
    *     summary: Update User
    *     tags: [Users]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
    *         application/json:
    *           schema:
    *             type: object
-   *             required:
-   *               - id
    *             properties:
-   *               id:
-   *                 type: string
-   *                 example: 2acee5ff-d55b-47a8-9caf-bece2ba102db23
    *               name:
    *                 type: string
    *                 nullable: true
@@ -67,15 +64,17 @@ export class UpdateUserController {
   public static async handle(req: TRoute.handleParams<TUpdateUser.Request.body, TUpdateUser.Request.params, TUpdateUser.Request.query>): Promise<Response<TUpdateUser.Response>> {
     try {
       const userParam = req.body
-      validateRequiredFields<TUpdateUser.Request.body>(userParam, ["id"])
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: userParam.id })
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userId })
       if (!user) throw new NotFoundError("User not found")
       
       const updateUser = new UpdateUser(new UserCommandRepository())
       
       await updateUser.execute(new UserDTO(
-        new Id(userParam.id),
+        new Id(userId),
         userParam.name ? new Name(userParam.name) : undefined,
         userParam.birthdate ? new DateEpoch(userParam.birthdate) : undefined,
         userParam.email ? new Email(userParam.email) : undefined,

@@ -9,10 +9,12 @@ import { DatabaseException } from '@/infra/exceptions'
 export class DeletePlanningController {
   /**
    * @swagger
-   * /plannings:
+   * /plannings/{id}:
    *   delete:
    *     summary: Delete Planning
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -52,12 +54,19 @@ export class DeletePlanningController {
     try {
       const id = req.params.id
       const permanent = req.query.permanent
+      const userId = req.userId
       const isPermanent = permanent ? permanent === "true" : false
 
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
       if (!id) throw new BadRequestError("Mising required parameter: Id")
 
       const planning = await new FindPlanning(new PlanningQueryRepository()).execute({ id: id })
       if (!planning) throw new NotFoundError("Planning not found")
+      
+      // Security check: ensure the planning belongs to the authenticated user
+      if (planning.getUserId().toString() !== userId) {
+        throw new BadRequestError("You don't have permission to delete this planning")
+      }
 
       const deletePlanning = new DeletePlanning(new PlanningCommandRepository())
 

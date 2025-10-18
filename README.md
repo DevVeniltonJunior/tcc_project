@@ -25,7 +25,21 @@ npm install
 
 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência)
+Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência):
+
+```env
+# Environment
+PROD=false
+
+# Frontend URL (usado quando PROD=true)
+FRONTEND_URL=http://localhost:5173
+
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+
+# JWT
+JWT_SECRET=your-secret-key-here
+```
 
 4. Execute as migrações do banco de dados
 ```bash
@@ -58,6 +72,45 @@ Authorization: Bearer <seu-token-aqui>
 ```
 
 📖 **Documentação completa de autenticação:** [AUTHENTICATION.md](./AUTHENTICATION.md)
+
+## 🌐 CORS (Cross-Origin Resource Sharing)
+
+O projeto possui configuração dinâmica de CORS baseada na variável de ambiente `PROD`:
+
+### Modo Desenvolvimento (`PROD=false`)
+- ✅ Aceita requisições de **qualquer origem** (`*`)
+- Ideal para desenvolvimento local e testes
+
+### Modo Produção (`PROD=true`)
+- 🔒 Aceita requisições **apenas da URL configurada** em `FRONTEND_URL`
+- Aumenta a segurança em ambiente de produção
+
+## 📡 Cliente HTTP (Axios) - APIs Externas
+
+⚠️ **Este é um BACKEND**: O Axios é usado para consumir **APIs externas** (IA, CEP, pagamentos), não para o frontend consumir esta API.
+
+### OpenRouter API (IA)
+```typescript
+import { openRouterApi } from '@/infra/config/axios'
+
+const response = await openRouterApi.post('/chat/completions', {
+  model: 'mistralai/mistral-7b-instruct',
+  messages: [{ role: 'user', content: 'Crie um planejamento' }]
+})
+```
+
+### APIs Externas Genéricas
+```typescript
+import { externalApi } from '@/infra/config/axios'
+
+// Consultar CEP
+const cep = await externalApi.get('https://viacep.com.br/ws/01001000/json/')
+
+// Enviar email via SendGrid
+await externalApi.post('https://api.sendgrid.com/v3/mail/send', data)
+```
+
+📖 **Mais exemplos:** [src/infra/config/axios/examples.ts](./src/infra/config/axios/examples.ts)
 
 ## 📚 Documentação da API
 
@@ -93,6 +146,8 @@ src/
 - **Express** - Framework web
 - **Prisma** - ORM para banco de dados
 - **JWT** - Autenticação
+- **Axios** - Cliente HTTP
+- **CORS** - Controle de acesso cross-origin
 - **Jest** - Framework de testes
 - **Swagger** - Documentação da API
 

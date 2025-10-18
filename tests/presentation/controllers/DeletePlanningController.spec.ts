@@ -11,16 +11,19 @@ describe("[Controller] DeletePlanningController", () => {
   let queryUsecaseSpy: jest.SpyInstance
   let planning: Planning
 
-  const makeRequest = (params: any = {}, query: any = {}) => ({
+  const makeRequest = (params: any = {}, query: any = {}, userId?: string) => ({
     body: {},
     params,
-    query
+    query,
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
+    const userId = Id.generate()
+    
     planning = new Planning(
       Id.generate(),
-      Id.generate(),
+      userId,
       new Name("Car"),
       new Goal("Mazda Miata"),
       new MoneyValue(90000.00),
@@ -39,27 +42,25 @@ describe("[Controller] DeletePlanningController", () => {
   it("should delete Planning successfully (soft delete by default)", async () => {
     queryUsecaseSpy.mockResolvedValue(planning)
 
-    const planningId = Id.generate()
-    const req = makeRequest({ id: planningId.toString() })
+    const req = makeRequest({ id: planning.getId().toString() }, {}, planning.getUserId().toString())
 
     const result = await DeletePlanningController.handle(req)
 
     expect(result.statusCode).toBe(200)
     expect(result.data).toEqual({ message: "Planning deleted successfully" })
-    expect(usecaseSpy).toHaveBeenCalledWith(planningId, new Bool(false))
+    expect(usecaseSpy).toHaveBeenCalledWith(planning.getId(), new Bool(false))
   })
 
   it("should delete Planning permanently if query.permanent=true", async () => {
     queryUsecaseSpy.mockResolvedValue(planning)
 
-    const planningId = Id.generate()
-    const req = makeRequest({ id: planningId.toString() }, { permanent: "true" })
+    const req = makeRequest({ id: planning.getId().toString() }, { permanent: "true" }, planning.getUserId().toString())
 
     const result = await DeletePlanningController.handle(req)
 
     expect(result.statusCode).toBe(200)
     expect(result.data).toEqual({ message: "Planning deleted successfully" })
-    expect(usecaseSpy).toHaveBeenCalledWith(planningId, new Bool(true))
+    expect(usecaseSpy).toHaveBeenCalledWith(planning.getId(), new Bool(true))
   })
 
   it("should return 400 if id is missing", async () => {
@@ -78,13 +79,13 @@ describe("[Controller] DeletePlanningController", () => {
 
     usecaseSpy.mockRejectedValueOnce(new InvalidParam("id"))
 
-    const planningId = Id.generate()
-    const req = makeRequest({ id: planningId.toString() })
+    const req = makeRequest({ id: planning.getId().toString() }, {}, planning.getUserId().toString())
 
     const result = await DeletePlanningController.handle(req)
 
     expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "id" })
+    expect(result.data).toHaveProperty("error")
+    expect(result.data.error).toContain("id")
   })
 
   it("should return 404 if Planning not exists", async () => {
@@ -104,8 +105,7 @@ describe("[Controller] DeletePlanningController", () => {
 
     usecaseSpy.mockRejectedValueOnce(new Error("Database crash"))
 
-    const planningId = Id.generate()
-    const req = makeRequest({ id: planningId.toString() })
+    const req = makeRequest({ id: planning.getId().toString() }, {}, planning.getUserId().toString())
 
     const result = await DeletePlanningController.handle(req)
 

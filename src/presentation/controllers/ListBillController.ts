@@ -11,6 +11,8 @@ export class ListBillController {
    *   get:
    *     summary: List Bill
    *     tags: [Bills]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: query
    *         name: id
@@ -127,6 +129,12 @@ export class ListBillController {
   public static async handle(req: TRoute.handleParams<TListBill.Request.body, TListBill.Request.params, TListBill.Request.query>): Promise<Response<TListBill.Response>> {
     try {
       const filters = req.query
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      
+      // Override userId from query with authenticated userId
+      filters.userId = userId
       
       if (filters.value !== undefined) {
         const value = Number(filters.value)

@@ -3,13 +3,17 @@ import { Router, Request, Response } from 'express'
 import { TCreateBill, TCreateUser, TDeleteBill, TDeleteUser, TFindUser, TListBill, TListUser, TUpdateBill, TUpdateUser, TFindBill, TCreatePassword, TListPlanning, TFindPlanning, TDeletePlanning, TUpdatePlanning, TCreatePlanning, TGeneratePlanning, TForgotPassword, TResetPassword, TRegister, TLogin } from '@/presentation/protocols'
 import { CreatePasswordController, CreatePlanningController, CreateUserController, DeletePlanningController, DeleteUserController, FindBillController, FindPlanningController, FindUserController, ListBillController, ListPlanningController, ListUserController, UpdatePlanningController, UpdateUserController, CreateBillController, UpdateBillController, DeleteBillController, ForgotPasswordController, ResetPasswordController, RegisterController, LoginController, GeneratePlanningController } from '@/presentation/controllers'
 import { AuthMiddleware, AuthenticatedRequest } from '@/presentation/middlewares'
+import { environment } from '@/infra/config'
+import { GetUserSummaryController } from '@/presentation/controllers/GetUserSummaryController'
 
 export const router = Router()
 
-router.use((req, res, next) => {
-  console.log('Time: ', Date.now())
-  next()
-})
+if (!environment.isProd) {
+  router.use((req, res, next) => {
+    console.log('Time: ', Date.now())
+    next()
+  })
+}
 
 router.get('/hello', (req, res) => {
   res.send({'message': 'Hello, Cognum!'})
@@ -43,6 +47,11 @@ router.delete('/users/:id', AuthMiddleware.authenticate, async (req: Authenticat
 
 router.get('/user', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
   const response = await FindUserController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
+  res.status(response.statusCode).json(response.data)
+})
+
+router.get('/user-summary', AuthMiddleware.authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const response = await GetUserSummaryController.handle({ body: req.body, params: req.params, query: req.query, userId: req.userId })
   res.status(response.statusCode).json(response.data)
 })
 

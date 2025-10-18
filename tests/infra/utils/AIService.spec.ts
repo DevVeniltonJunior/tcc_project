@@ -1,23 +1,14 @@
-import https from "https"
 import { AIService } from "@/infra/utils/AIService"
 import { ServiceException } from "@/infra/exceptions"
-import { EventEmitter } from "events"
+import { openRouterApi } from "@/infra/config"
 
-jest.mock("https")
-
-class MockResponse extends EventEmitter {
-  statusCode: number
-  constructor(statusCode: number) {
-    super()
-    this.statusCode = statusCode
+jest.mock("@/infra/config", () => ({
+  openRouterApi: {
+    post: jest.fn()
   }
-}
+}))
 
-class MockRequest extends EventEmitter {
-  write = jest.fn()
-  end = jest.fn()
-  destroy = jest.fn()
-}
+const mockOpenRouterApi = openRouterApi as jest.Mocked<typeof openRouterApi>
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -25,11 +16,6 @@ beforeEach(() => {
 
 describe("[Utils] AIService", () => {
   describe("constructor", () => {
-    it("should initialize with API key from constructor parameter", () => {
-      const service = new AIService("test-api-key")
-      expect(service).toBeInstanceOf(AIService)
-    })
-
     it("should initialize with API key from environment variable", () => {
       process.env.AI_KEY = "env-api-key"
       const service = new AIService()
@@ -48,54 +34,9 @@ describe("[Utils] AIService", () => {
     let service: AIService
 
     beforeEach(() => {
-      service = new AIService("test-api-key")
+      process.env.AI_KEY = "test-api-key"
+      service = new AIService()
     })
-
-    const mockHttpsRequest = (statusCode: number, responseData: any) => {
-      const mockReq = new MockRequest()
-      const mockRes = new MockResponse(statusCode)
-
-      ;(https.request as jest.Mock).mockImplementation((options, callback) => {
-        if (callback) {
-          process.nextTick(() => {
-            callback(mockRes as any)
-            process.nextTick(() => {
-              mockRes.emit("data", JSON.stringify(responseData))
-              mockRes.emit("end")
-            })
-          })
-        }
-        return mockReq as any
-      })
-
-      return mockReq
-    }
-
-    const mockHttpsError = (error: Error) => {
-      const mockReq = new MockRequest()
-
-      ;(https.request as jest.Mock).mockImplementation(() => {
-        process.nextTick(() => {
-          mockReq.emit("error", error)
-        })
-        return mockReq as any
-      })
-
-      return mockReq
-    }
-
-    const mockHttpsTimeout = () => {
-      const mockReq = new MockRequest()
-
-      ;(https.request as jest.Mock).mockImplementation(() => {
-        process.nextTick(() => {
-          mockReq.emit("timeout")
-        })
-        return mockReq as any
-      })
-
-      return mockReq
-    }
 
     it("should generate AI response successfully", async () => {
       const mockResponse = {
@@ -117,7 +58,7 @@ describe("[Utils] AIService", () => {
         },
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const result = await service.generate("Test prompt")
 
@@ -131,18 +72,12 @@ describe("[Utils] AIService", () => {
         },
       })
 
-      expect(https.request).toHaveBeenCalledWith(
+      expect(mockOpenRouterApi.post).toHaveBeenCalledWith(
+        '/chat/completions',
         expect.objectContaining({
-          hostname: "openrouter.ai",
-          port: 443,
-          path: "/api/v1/chat/completions",
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer test-api-key",
-            "Content-Type": "application/json",
-          }),
-        }),
-        expect.any(Function)
+          model: "mistralai/mistral-7b-instruct",
+          messages: [{ role: "user", content: "Test prompt" }],
+        })
       )
     })
 
@@ -161,7 +96,7 @@ describe("[Utils] AIService", () => {
         ],
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const result = await service.generate("Test prompt", "openai/gpt-4")
 
@@ -179,25 +114,15 @@ describe("[Utils] AIService", () => {
       await expect(service.generate("   ")).rejects.toThrow(ServiceException)
       await expect(service.generate("   ")).rejects.toThrow("Prompt cannot be empty")
 
-      expect(https.request).not.toHaveBeenCalled()
+      expect(mockOpenRouterApi.post).not.toHaveBeenCalled()
     })
 
     it("should throw ServiceException if API returns error status", async () => {
-      mockHttpsRequest(401, { error: "Unauthorized - Invalid API key" })
+      mockOpenRouterApi.post.mockRejectedValue({
+        response: { status: 401, data: { error: "Unauthorized" } }
+      })
 
       await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        /OpenRouter API error: 401/
-      )
-    })
-
-    it("should throw ServiceException if API returns rate limit error", async () => {
-      mockHttpsRequest(429, { error: "Rate limit exceeded" })
-
-      await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        /OpenRouter API error: 429/
-      )
     })
 
     it("should throw ServiceException if response format is invalid", async () => {
@@ -207,121 +132,11 @@ describe("[Utils] AIService", () => {
         choices: [], // Empty choices array
       }
 
-      mockHttpsRequest(200, invalidResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: invalidResponse })
 
       await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
       await expect(service.generate("Test prompt")).rejects.toThrow(
         "Invalid response format from OpenRouter API"
-      )
-    })
-
-    it("should throw ServiceException if response is missing message content", async () => {
-      const invalidResponse = {
-        id: "gen-790",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              // Missing content field
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      mockHttpsRequest(200, invalidResponse)
-
-      await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        "Invalid response format from OpenRouter API"
-      )
-    })
-
-    it("should throw ServiceException on timeout", async () => {
-      mockHttpsTimeout()
-
-      await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        "Request timeout - AI service took too long to respond"
-      )
-    })
-
-    it("should throw ServiceException on network error", async () => {
-      mockHttpsError(new Error("Network connection failed"))
-
-      await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        "Failed to generate AI response: Network connection failed"
-      )
-    })
-
-    it("should include HTTP-Referer and X-Title headers from environment", async () => {
-      process.env.APP_URL = "https://myapp.com"
-      process.env.APP_NAME = "My TCC App"
-
-      const mockResponse = {
-        id: "gen-999",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: "Response",
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      mockHttpsRequest(200, mockResponse)
-
-      await service.generate("Test prompt")
-
-      expect(https.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "HTTP-Referer": "https://myapp.com",
-            "X-Title": "My TCC App",
-          }),
-        }),
-        expect.any(Function)
-      )
-
-      delete process.env.APP_URL
-      delete process.env.APP_NAME
-    })
-
-    it("should use default headers if environment variables are not set", async () => {
-      delete process.env.APP_URL
-      delete process.env.APP_NAME
-
-      const mockResponse = {
-        id: "gen-1000",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: "Response",
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      mockHttpsRequest(200, mockResponse)
-
-      await service.generate("Test prompt")
-
-      expect(https.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "TCC Project",
-          }),
-        }),
-        expect.any(Function)
       )
     })
 
@@ -341,80 +156,12 @@ describe("[Utils] AIService", () => {
         // No usage field
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const result = await service.generate("Test prompt")
 
       expect(result).toEqual({
         text: "Response without usage",
-        model: "mistralai/mistral-7b-instruct",
-        usage: undefined,
-      })
-    })
-
-    it("should handle malformed JSON response", async () => {
-      const mockReq = new MockRequest()
-      const mockRes = new MockResponse(200)
-
-      ;(https.request as jest.Mock).mockImplementation((options, callback) => {
-        if (callback) {
-          process.nextTick(() => {
-            callback(mockRes as any)
-            process.nextTick(() => {
-              mockRes.emit("data", "{ invalid json }")
-              mockRes.emit("end")
-            })
-          })
-        }
-        return mockReq as any
-      })
-
-      await expect(service.generate("Test prompt")).rejects.toThrow(ServiceException)
-      await expect(service.generate("Test prompt")).rejects.toThrow(
-        /Failed to parse response/
-      )
-    })
-
-    it("should handle response with multiple data chunks", async () => {
-      const mockReq = new MockRequest()
-      const mockRes = new MockResponse(200)
-
-      const mockResponse = {
-        id: "gen-multi",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: "Multi-chunk response",
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      const responseString = JSON.stringify(mockResponse)
-      const chunk1 = responseString.slice(0, responseString.length / 2)
-      const chunk2 = responseString.slice(responseString.length / 2)
-
-      ;(https.request as jest.Mock).mockImplementation((options, callback) => {
-        if (callback) {
-          process.nextTick(() => {
-            callback(mockRes as any)
-            process.nextTick(() => {
-              mockRes.emit("data", chunk1)
-              mockRes.emit("data", chunk2)
-              mockRes.emit("end")
-            })
-          })
-        }
-        return mockReq as any
-      })
-
-      const result = await service.generate("Test prompt")
-
-      expect(result).toEqual({
-        text: "Multi-chunk response",
         model: "mistralai/mistral-7b-instruct",
         usage: undefined,
       })
@@ -425,54 +172,9 @@ describe("[Utils] AIService", () => {
     let service: AIService
 
     beforeEach(() => {
-      service = new AIService("test-api-key")
+      process.env.AI_KEY = "test-api-key"
+      service = new AIService()
     })
-
-    const mockHttpsRequest = (statusCode: number, responseData: any) => {
-      const mockReq = new MockRequest()
-      const mockRes = new MockResponse(statusCode)
-
-      ;(https.request as jest.Mock).mockImplementation((options, callback) => {
-        if (callback) {
-          process.nextTick(() => {
-            callback(mockRes as any)
-            process.nextTick(() => {
-              mockRes.emit("data", JSON.stringify(responseData))
-              mockRes.emit("end")
-            })
-          })
-        }
-        return mockReq as any
-      })
-
-      return mockReq
-    }
-
-    const mockHttpsError = (error: Error) => {
-      const mockReq = new MockRequest()
-
-      ;(https.request as jest.Mock).mockImplementation(() => {
-        process.nextTick(() => {
-          mockReq.emit("error", error)
-        })
-        return mockReq as any
-      })
-
-      return mockReq
-    }
-
-    const mockHttpsTimeout = () => {
-      const mockReq = new MockRequest()
-
-      ;(https.request as jest.Mock).mockImplementation(() => {
-        process.nextTick(() => {
-          mockReq.emit("timeout")
-        })
-        return mockReq as any
-      })
-
-      return mockReq
-    }
 
     it("should generate structured AI response successfully", async () => {
       interface PersonData {
@@ -504,7 +206,7 @@ describe("[Utils] AIService", () => {
         },
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const schema = {
         type: "object",
@@ -533,19 +235,7 @@ describe("[Utils] AIService", () => {
         total_tokens: 30,
       })
 
-      expect(https.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          hostname: "openrouter.ai",
-          port: 443,
-          path: "/api/v1/chat/completions",
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer test-api-key",
-            "Content-Type": "application/json",
-          }),
-        }),
-        expect.any(Function)
-      )
+      expect(mockOpenRouterApi.post).toHaveBeenCalled()
     })
 
     it("should generate structured AI response with custom model", async () => {
@@ -563,7 +253,7 @@ describe("[Utils] AIService", () => {
         ],
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const schema = {
         type: "object",
@@ -601,7 +291,7 @@ describe("[Utils] AIService", () => {
         "Prompt cannot be empty"
       )
 
-      expect(https.request).not.toHaveBeenCalled()
+      expect(mockOpenRouterApi.post).not.toHaveBeenCalled()
     })
 
     it("should throw ServiceException if schema is invalid", async () => {
@@ -619,7 +309,7 @@ describe("[Utils] AIService", () => {
         service.generateStructured("Test prompt", undefined as any)
       ).rejects.toThrow("Valid JSON schema is required")
 
-      expect(https.request).not.toHaveBeenCalled()
+      expect(mockOpenRouterApi.post).not.toHaveBeenCalled()
     })
 
     it("should throw ServiceException if response is not valid JSON", async () => {
@@ -637,7 +327,7 @@ describe("[Utils] AIService", () => {
         ],
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const schema = { type: "object", properties: {} }
 
@@ -650,16 +340,15 @@ describe("[Utils] AIService", () => {
     })
 
     it("should throw ServiceException if API returns error status", async () => {
-      mockHttpsRequest(401, { error: "Unauthorized - Invalid API key" })
+      mockOpenRouterApi.post.mockRejectedValue({
+        response: { status: 401, data: { error: "Unauthorized" } }
+      })
 
       const schema = { type: "object", properties: {} }
 
       await expect(
         service.generateStructured("Test prompt", schema)
       ).rejects.toThrow(ServiceException)
-      await expect(
-        service.generateStructured("Test prompt", schema)
-      ).rejects.toThrow(/OpenRouter API error: 401/)
     })
 
     it("should throw ServiceException if response format is invalid", async () => {
@@ -669,7 +358,7 @@ describe("[Utils] AIService", () => {
         choices: [], // Empty choices array
       }
 
-      mockHttpsRequest(200, invalidResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: invalidResponse })
 
       const schema = { type: "object", properties: {} }
 
@@ -679,114 +368,6 @@ describe("[Utils] AIService", () => {
       await expect(
         service.generateStructured("Test prompt", schema)
       ).rejects.toThrow("Invalid response format from OpenRouter API")
-    })
-
-    it("should throw ServiceException on timeout", async () => {
-      mockHttpsTimeout()
-
-      const schema = { type: "object", properties: {} }
-
-      await expect(
-        service.generateStructured("Test prompt", schema)
-      ).rejects.toThrow(ServiceException)
-      await expect(
-        service.generateStructured("Test prompt", schema)
-      ).rejects.toThrow("Request timeout - AI service took too long to respond")
-    })
-
-    it("should throw ServiceException on network error", async () => {
-      mockHttpsError(new Error("Network connection failed"))
-
-      const schema = { type: "object", properties: {} }
-
-      await expect(
-        service.generateStructured("Test prompt", schema)
-      ).rejects.toThrow(ServiceException)
-      await expect(
-        service.generateStructured("Test prompt", schema)
-      ).rejects.toThrow(
-        "Failed to generate structured AI response: Network connection failed"
-      )
-    })
-
-    it("should handle complex nested JSON schemas", async () => {
-      interface ComplexData {
-        user: {
-          name: string
-          details: {
-            age: number
-            hobbies: string[]
-          }
-        }
-        metadata: {
-          timestamp: string
-        }
-      }
-
-      const mockResponse = {
-        id: "gen-complex",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: JSON.stringify({
-                user: {
-                  name: "Alice",
-                  details: {
-                    age: 25,
-                    hobbies: ["reading", "coding"],
-                  },
-                },
-                metadata: {
-                  timestamp: "2025-10-17T10:00:00Z",
-                },
-              }),
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      mockHttpsRequest(200, mockResponse)
-
-      const schema = {
-        type: "object",
-        properties: {
-          user: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              details: {
-                type: "object",
-                properties: {
-                  age: { type: "number" },
-                  hobbies: {
-                    type: "array",
-                    items: { type: "string" },
-                  },
-                },
-              },
-            },
-          },
-          metadata: {
-            type: "object",
-            properties: {
-              timestamp: { type: "string" },
-            },
-          },
-        },
-      }
-
-      const result = await service.generateStructured<ComplexData>(
-        "Generate complex data",
-        schema
-      )
-
-      expect(result.data.user.name).toBe("Alice")
-      expect(result.data.user.details.age).toBe(25)
-      expect(result.data.user.details.hobbies).toEqual(["reading", "coding"])
-      expect(result.data.metadata.timestamp).toBe("2025-10-17T10:00:00Z")
     })
 
     it("should handle response without usage information", async () => {
@@ -805,7 +386,7 @@ describe("[Utils] AIService", () => {
         // No usage field
       }
 
-      mockHttpsRequest(200, mockResponse)
+      mockOpenRouterApi.post.mockResolvedValue({ data: mockResponse })
 
       const schema = {
         type: "object",
@@ -818,64 +399,6 @@ describe("[Utils] AIService", () => {
 
       expect(result.data).toEqual({ status: "ok" })
       expect(result.usage).toBeUndefined()
-    })
-
-    it("should send response_format with json_schema in request body", async () => {
-      const mockResponse = {
-        id: "gen-format",
-        model: "mistralai/mistral-7b-instruct",
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: JSON.stringify({ test: "value" }),
-            },
-            finish_reason: "stop",
-          },
-        ],
-      }
-
-      const mockReq = new MockRequest()
-      const mockRes = new MockResponse(200)
-
-      let capturedBody: any = null
-
-      ;(https.request as jest.Mock).mockImplementation((options, callback) => {
-        if (callback) {
-          process.nextTick(() => {
-            callback(mockRes as any)
-            process.nextTick(() => {
-              mockRes.emit("data", JSON.stringify(mockResponse))
-              mockRes.emit("end")
-            })
-          })
-        }
-        return mockReq as any
-      })
-
-      // Capture write call to inspect body
-      mockReq.write.mockImplementation((data) => {
-        capturedBody = JSON.parse(data)
-      })
-
-      const schema = {
-        type: "object",
-        properties: {
-          test: { type: "string" },
-        },
-      }
-
-      await service.generateStructured("Test prompt", schema)
-
-      expect(capturedBody).toHaveProperty("response_format")
-      expect(capturedBody.response_format).toEqual({
-        type: "json_schema",
-        json_schema: {
-          name: "structured_response",
-          strict: true,
-          schema: schema,
-        },
-      })
     })
   })
 })

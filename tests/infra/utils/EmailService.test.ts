@@ -35,7 +35,7 @@ describe("[Utils] EmailService Integration Test", () => {
     const previewUrl = nodemailer.getTestMessageUrl(info)
 
     expect(info.accepted).toContain(etherealAccount.user)
-  }, 5000)
+  }, 10000)
 
   it("should send a welcome email using the template", async () => {
     const username = "JohnDoe"
@@ -55,5 +55,5 @@ describe("[Utils] EmailService Integration Test", () => {
     const previewUrl = nodemailer.getTestMessageUrl(info)
 
     expect(info.accepted).toContain(etherealAccount.user)
-  }, 5000)
+  }, 10000)
 })

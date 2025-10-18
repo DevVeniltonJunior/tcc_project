@@ -659,7 +659,7 @@ describe("[Utils] AIService Integration Test", () => {
           properties: {
             success: { type: "boolean" },
             message: { type: "string" },
-            error: { type: ["string", "null"] },
+            error: { anyOf: [{ type: "string" }, { type: "null" }] } as any,
           },
           required: ["success", "message", "error"],
         }

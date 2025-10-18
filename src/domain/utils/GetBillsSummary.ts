@@ -15,6 +15,10 @@ export class GetBillsSummary {
       const installment_bills = bills.filter(
         (bill: Bill) => bill.getInstallmentsNumber()?.toNumber() !== undefined && bill.getInstallmentsNumber()!.toNumber() > 1
       )
+
+      const fixesBillsNames = fixesBills.map((bill: Bill) => bill.getName().toString()).join(", ")
+      const monthlyMiscBillsNames = monthlyMiscBills.map((bill: Bill) => bill.getName().toString()).join(", ")
+      const installmentBillsNames = installment_bills.map((bill: Bill) => bill.getName().toString()).join(", ")
   
       const thisMonthMiscBills = monthlyMiscBills.filter((bill: Bill) => bill.getCreatedAt().toDate().getMonth() === new Date().getMonth() && bill.getCreatedAt().toDate().getFullYear() === new Date().getFullYear())
       
@@ -61,7 +65,10 @@ export class GetBillsSummary {
         totalMonthlyMiscBillsValue: totalMonthlyMiscBillsValue,
         partialValueNextMonth: partialValueNextMonth,
         partialValue2MonthsLater: partialValue2MonthsLater,
-        partialValue3MonthsLater: partialValue3MonthsLater
+        partialValue3MonthsLater: partialValue3MonthsLater,
+        fixesBillsNames: fixesBillsNames,
+        monthlyMiscBillsNames: monthlyMiscBillsNames,
+        installmentBillsNames: installmentBillsNames
       }
     }
     catch(error) {
@@ -75,7 +82,10 @@ export class GetBillsSummary {
           totalMonthlyMiscBillsValue: 0,
           partialValueNextMonth: 0,
           partialValue2MonthsLater: 0,
-          partialValue3MonthsLater: 0
+          partialValue3MonthsLater: 0,
+          fixesBillsNames: "",
+          monthlyMiscBillsNames: "",
+          installmentBillsNames: ""
         }
       }
   

@@ -7,5 +7,8 @@ export type TBillsSummary = {
   totalMonthlyMiscBillsValue: number,
   partialValueNextMonth: number,
   partialValue2MonthsLater: number,
-  partialValue3MonthsLater: number
+  partialValue3MonthsLater: number,
+  fixesBillsNames: string,
+  monthlyMiscBillsNames: string,
+  installmentBillsNames: string
 }

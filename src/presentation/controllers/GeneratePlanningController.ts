@@ -7,6 +7,7 @@ import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { DatabaseException } from '@/infra/exceptions'
 import { AIService } from '@/infra/utils'
+import { GetBillsSummary } from '@/domain/utils'
 
 export class GeneratePlanningController {
   /**
@@ -150,7 +151,9 @@ export class GeneratePlanningController {
       if (!user) throw new NotFoundError("User not found")
       if (!user.getSalary()) throw new BadRequestError("User salary not found")
 
-      const generatePlanning = new GeneratePlanning(new PlanningCommandRepository(), new BillQueryRepository(), new AIService())
+      const getBillsSummary = new GetBillsSummary(new BillQueryRepository())
+
+      const generatePlanning = new GeneratePlanning(new PlanningCommandRepository(), getBillsSummary, new AIService())
 
       const entity = await generatePlanning.execute(
         user,

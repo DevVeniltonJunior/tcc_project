@@ -1,4 +1,5 @@
 export type TBillsSummary = {
+  billsActiveCount: number,
   totalBillAmount: number,
   totalValue: number,
   totalInstallmentValue: number,

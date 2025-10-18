@@ -98,7 +98,7 @@ export class GeneratePlanning implements IGeneratePlanning {
         },
         description: {
           type: "string",
-          description: "Description of the planning"
+          description: "Description why the plan was generated and how it was relevant to achieve the goal"
         },
       },
       required: ["name", "plan", "description"]

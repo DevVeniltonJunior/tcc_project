@@ -19,10 +19,13 @@ export interface AIStructuredResponse<T = any> {
 }
 
 export interface JSONSchema {
+  title?: string
+  description?: string
   type: string
-  properties?: Record<string, any>
+  properties?: Record<string, JSONSchema>
   required?: string[]
   [key: string]: any
+  additionalProperties?: boolean
 }
 
 export interface OpenRouterResponse {

@@ -64,7 +64,10 @@ describe("[Usecases] GetUserSummary", () => {
       totalMonthlyMiscBillsValue: 200,
       partialValueNextMonth: 150,
       partialValue2MonthsLater: 200,
-      partialValue3MonthsLater: 150
+      partialValue3MonthsLater: 150,
+      fixesBillsNames: "Fixes Bills",
+      monthlyMiscBillsNames: "Monthly Misc Bills",
+      installmentBillsNames: "Installment Bills"
     }
   })
 
@@ -134,7 +137,10 @@ describe("[Usecases] GetUserSummary", () => {
       totalMonthlyMiscBillsValue: 0,
       partialValueNextMonth: 0,
       partialValue2MonthsLater: 0,
-      partialValue3MonthsLater: 0
+      partialValue3MonthsLater: 0,
+      fixesBillsNames: "",
+      monthlyMiscBillsNames: "",
+      installmentBillsNames: ""
     })
 
     const result = await usecase.execute(userId)

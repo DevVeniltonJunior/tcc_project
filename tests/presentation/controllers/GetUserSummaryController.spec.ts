@@ -65,7 +65,10 @@ describe("[Controller] GetUserSummaryController", () => {
       totalMonthlyMiscBillsValue: 200,
       partialValueNextMonth: 150,
       partialValue2MonthsLater: 200,
-      partialValue3MonthsLater: 150
+      partialValue3MonthsLater: 150,
+      fixesBillsNames: "Fixes Bills",
+      monthlyMiscBillsNames: "Monthly Misc Bills",
+      installmentBillsNames: "Installment Bills"
     }
 
     getBillsSummaryExecuteSpy = jest

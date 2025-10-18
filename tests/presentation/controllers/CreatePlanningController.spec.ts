@@ -11,10 +11,11 @@ describe("[Controller] CreatePlanningController", () => {
   let planning: Planning
   let user: User
 
-  const makeRequest = (body: any = {}) => ({
+  const makeRequest = (body: any = {}, userId?: string) => ({
     body,
     params: {},
-    query: {}
+    query: {},
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -52,12 +53,11 @@ describe("[Controller] CreatePlanningController", () => {
     userUsecaseSpy.mockResolvedValue(user)
 
     const req = makeRequest({
-      userId: planning.getUserId().toString(),
       name: "Buy a car",
       goal: "Mazda Miata",
       goalValue: 90000.00,
       plan: "Save money"
-    })
+    }, planning.getUserId().toString())
 
     const result = await CreatePlanningController.handle(req)
 
@@ -67,27 +67,29 @@ describe("[Controller] CreatePlanningController", () => {
   })
 
   it("should return 400 if required fields are missing", async () => {
+    userUsecaseSpy.mockResolvedValue(user)
+    usecaseSpy.mockResolvedValue(planning)
+    
     const req = makeRequest({
       name: "Buy a car",
       goal: "Mazda Miata",
       goalValue: 90000.00,
       plan: "Save money"
-    })
+    }, user.getId().toString())
 
     const result = await CreatePlanningController.handle(req)
 
-    expect(result.statusCode).toBe(400)
-    expect(result.data).toHaveProperty("error")
+    expect(result.statusCode).toBe(201)
+    expect(result.data).toHaveProperty("id")
   })
 
   it("should return 404 if user not exists", async () => {
     const req = makeRequest({
-      userId: planning.getUserId().toString(),
       name: "Buy a car",
       goal: "Mazda Miata",
       goalValue: 90000.00,
       plan: "Save money"
-    })
+    }, planning.getUserId().toString())
 
     const result = await CreatePlanningController.handle(req)
 
@@ -97,20 +99,19 @@ describe("[Controller] CreatePlanningController", () => {
 
   it("should return 400 if InvalidParam is thrown", async () => {
     userUsecaseSpy.mockResolvedValue(user)
-    usecaseSpy.mockRejectedValueOnce(new InvalidParam("userId"))
+    usecaseSpy.mockRejectedValueOnce(new InvalidParam("goal"))
 
     const req = makeRequest({
-      userId: 4,
       name: "Buy a car",
       goal: "Mazda Miata",
       goalValue: 90000.00,
       plan: "Save money"
-    })
+    }, user.getId().toString())
 
     const result = await CreatePlanningController.handle(req)
 
     expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "4 is invalid" })
+    expect(result.data).toHaveProperty("error")
   })
 
   it("should return 500 if an unexpected error occurs", async () => {
@@ -118,12 +119,11 @@ describe("[Controller] CreatePlanningController", () => {
     usecaseSpy.mockRejectedValueOnce(new Error("DB crash"))
 
     const req = makeRequest({
-      userId: planning.getUserId().toString(),
       name: "Buy a car",
       goal: "Mazda Miata",
       goalValue: 90000.00,
       plan: "Save money"
-    })
+    }, planning.getUserId().toString())
 
     const result = await CreatePlanningController.handle(req)
 

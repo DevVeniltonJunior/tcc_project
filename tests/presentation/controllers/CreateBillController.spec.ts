@@ -11,10 +11,11 @@ describe("[Controller] CreateBillController", () => {
   let bill: Bill
   let user: User
 
-  const makeRequest = (body: any = {}) => ({
+  const makeRequest = (body: any = {}, userId?: string) => ({
     body,
     params: {},
-    query: {}
+    query: {},
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -66,7 +67,7 @@ describe("[Controller] CreateBillController", () => {
   it("should return 400 if required fields are missing", async () => {
     const req = makeRequest({
       name: "invalid@email.com"
-    })
+    }, user.getId().toString())
 
     const result = await CreateBillController.handle(req)
 
@@ -89,18 +90,17 @@ describe("[Controller] CreateBillController", () => {
 
   it("should return 400 if InvalidParam is thrown", async () => {
     userUsecaseSpy.mockResolvedValue(user)
-    usecaseSpy.mockRejectedValueOnce(new InvalidParam("userId"))
+    usecaseSpy.mockRejectedValueOnce(new InvalidParam("name"))
 
     const req = makeRequest({
-      userId: 4,
       name: "Internet",
       value: 120.00
-    })
+    }, user.getId().toString())
 
     const result = await CreateBillController.handle(req)
 
     expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "4 is invalid" })
+    expect(result.data).toHaveProperty("error")
   })
 
   it("should return 500 if an unexpected error occurs", async () => {

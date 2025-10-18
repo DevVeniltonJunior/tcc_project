@@ -11,10 +11,11 @@ describe("[Controller] UpdateUserController", () => {
   let queryUsecaseSpy: jest.SpyInstance
   let user: User
 
-  const makeRequest = (body: any = {}) => ({
+  const makeRequest = (body: any = {}, userId?: string) => ({
     body,
     params: {},
-    query: {}
+    query: {},
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -59,14 +60,13 @@ describe("[Controller] UpdateUserController", () => {
     queryUsecaseSpy.mockResolvedValue(user)
 
     const req = makeRequest({
-      name: "Jane Doe"
-    })
+      name: "Updated Jane Doe"
+    }, user.getId().toString())
 
     const result = await UpdateUserController.handle(req)
 
-    expect(result.statusCode).toBe(400)
-    expect(result.data).toHaveProperty("error")
-    expect(result.data.error).toMatch(/id/i)
+    expect(result.statusCode).toBe(200)
+    expect(result.data).toEqual({ message: "User updated successfully" })
   })
 
   it("should return 400 if InvalidParam is thrown", async () => {

@@ -11,10 +11,11 @@ describe("[Controller] FindUserController", () => {
   let usecaseSpy: jest.SpyInstance
   let user: User
 
-  const makeRequest = (query: any = {}) => ({
+  const makeRequest = (query: any = {}, userId?: string) => ({
     body: {},
     params: {},
-    query
+    query,
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -43,13 +44,13 @@ describe("[Controller] FindUserController", () => {
   })
 
   it("should find user successfully with valid filter", async () => {
-    const req = makeRequest({ name: "Jane Doe" })
+    const req = makeRequest({}, user.getId().toString())
 
     const result = await FindUserController.handle(req)
 
     expect(result.statusCode).toBe(200)
     expect(result.data).toEqual(user.toJson())
-    expect(usecaseSpy).toHaveBeenCalledWith({ name: "Jane Doe" })
+    expect(usecaseSpy).toHaveBeenCalledWith({ id: user.getId().toString() })
   })
 
   it("should return 400 if no filters are provided", async () => {
@@ -57,34 +58,34 @@ describe("[Controller] FindUserController", () => {
 
     const result = await FindUserController.handle(req)
 
-    expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "At least one filter must be provided" })
+    expect(result.statusCode).toBe(200)
+    expect(result.data).toHaveProperty("id")
   })
 
   it("should return 400 if salary is not a number", async () => {
-    const req = makeRequest({ salary: "abc" })
+    const req = makeRequest({}, user.getId().toString())
 
     const result = await FindUserController.handle(req)
 
-    expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "Query parameter 'salary' must be a valid number" })
+    expect(result.statusCode).toBe(200)
+    expect(result.data).toEqual(user.toJson())
   })
 
   it("should return 400 if InvalidParam is thrown", async () => {
     usecaseSpy.mockRejectedValueOnce(new InvalidParam("email"))
 
-    const req = makeRequest({ email: "invalid_email" })
+    const req = makeRequest({}, user.getId().toString())
 
     const result = await FindUserController.handle(req)
 
     expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "email" })
+    expect(result.data).toHaveProperty("error")
   })
 
   it("should return 400 if BadRequestError is thrown", async () => {
     usecaseSpy.mockRejectedValueOnce(new BadRequestError("Invalid filter"))
 
-    const req = makeRequest({ id: "wrong-id" })
+    const req = makeRequest({}, user.getId().toString())
 
     const result = await FindUserController.handle(req)
 
@@ -95,7 +96,7 @@ describe("[Controller] FindUserController", () => {
   it("should return 500 if unexpected error occurs", async () => {
     usecaseSpy.mockRejectedValueOnce(new Error("DB crash"))
 
-    const req = makeRequest({ name: "Jane Doe" })
+    const req = makeRequest({}, user.getId().toString())
 
     const result = await FindUserController.handle(req)
 

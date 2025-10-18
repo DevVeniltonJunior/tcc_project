@@ -13,10 +13,11 @@ describe("[Controller] CreatePasswordController", () => {
   let password: Password
   let user: User
 
-  const makeRequest = (body: any = {}) => ({
+  const makeRequest = (body: any = {}, userId?: string) => ({
     body,
     params: {},
-    query: {}
+    query: {},
+    userId: userId || Id.generate().toString()
   })
 
   beforeEach(() => {
@@ -53,9 +54,8 @@ describe("[Controller] CreatePasswordController", () => {
     encryptSpy.mockResolvedValue("hashed_pass")
 
     const req = makeRequest({
-      userId: password.getUserId().toString(),
       password: "plain123"
-    })
+    }, password.getUserId().toString())
 
     const result = await CreatePasswordController.handle(req)
 
@@ -66,9 +66,11 @@ describe("[Controller] CreatePasswordController", () => {
   })
 
   it("should return 400 if required fields are missing", async () => {
+    userUsecaseSpy.mockResolvedValue(user)
+    
     const req = makeRequest({
-      password: "invalid@email.com"
-    })
+      // password is missing
+    }, user.getId().toString())
 
     const result = await CreatePasswordController.handle(req)
 
@@ -78,9 +80,8 @@ describe("[Controller] CreatePasswordController", () => {
 
   it("should return 404 if user not exists", async () => {
     const req = makeRequest({
-      userId: Id.generate().toString(),
       password: "invalid@email.com"
-    })
+    }, Id.generate().toString())
 
     const result = await CreatePasswordController.handle(req)
 
@@ -93,14 +94,14 @@ describe("[Controller] CreatePasswordController", () => {
     usecaseSpy.mockRejectedValueOnce(new InvalidParam("userId"))
 
     const req = makeRequest({
-      userId: 4,
       password: "invalid_email"
-    })
+    }, user.getId().toString())
 
     const result = await CreatePasswordController.handle(req)
 
     expect(result.statusCode).toBe(400)
-    expect(result.data).toEqual({ error: "4 is invalid" })
+    expect(result.data).toHaveProperty("error")
+    expect(result.data.error).toContain("userId")
   })
 
   it("should return 500 if an unexpected error occurs", async () => {
@@ -108,9 +109,8 @@ describe("[Controller] CreatePasswordController", () => {
     usecaseSpy.mockRejectedValueOnce(new Error("DB crash"))
 
     const req = makeRequest({
-      userId: password.getUserId().toString(),
       password: "plain123"
-    })
+    }, password.getUserId().toString())
 
     const result = await CreatePasswordController.handle(req)
 

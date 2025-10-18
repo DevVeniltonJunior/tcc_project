@@ -6,6 +6,7 @@ import { BillDTO, PlanningDTO } from "../dtos"
 import { IAIService, JSONSchema, AIStructuredResponse, AIResponse } from "@/infra/protocols"
 import { BadRequestError } from "@/presentation/exceptions"
 import { DatabaseException } from "@/infra/exceptions"
+import { GetBillsSummary } from "@/domain/utils/GetBillsSummary"
 
 export class PlanningCommandRepositoryStub implements IPlanningCommandRepository {
   public create = jest.fn<Promise<Planning>, [Planning]>(async (entity: Planning) => {
@@ -66,6 +67,7 @@ export class AIServiceStub implements IAIService {
 describe("[Usecases] GeneratePlanning", () => {
   let planningRepository: PlanningCommandRepositoryStub
   let billRepository: BillQueryRepositoryStub
+  let getBillsSummary: GetBillsSummary
   let aiService: AIServiceStub
   let usecase: GeneratePlanning
   let user: User
@@ -77,9 +79,10 @@ describe("[Usecases] GeneratePlanning", () => {
   beforeEach(() => {
     planningRepository = new PlanningCommandRepositoryStub()
     billRepository = new BillQueryRepositoryStub()
+    getBillsSummary = new GetBillsSummary(billRepository)
     aiService = new AIServiceStub()
 
-    usecase = new GeneratePlanning(planningRepository, billRepository, aiService)
+    usecase = new GeneratePlanning(planningRepository, getBillsSummary, aiService)
 
     userId = Id.generate()
     user = new User(

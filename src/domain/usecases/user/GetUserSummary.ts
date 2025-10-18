@@ -1,4 +1,4 @@
-import { IGetUserSummary, IUserQueryRepository, TBillsSummary, TUserSummary, IGetBillsSummary } from "@/domain/protocols"
+import { IGetUserSummary, IUserQueryRepository, TUserSummary, IGetBillsSummary } from "@/domain/protocols"
 import { Id } from "@/domain/valueObjects"
 
 export class GetUserSummary implements IGetUserSummary {

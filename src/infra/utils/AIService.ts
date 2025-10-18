@@ -1,16 +1,13 @@
-import https from "https"
 import { ServiceException } from "@/infra/exceptions"
 import { OpenRouterResponse, JSONSchema, AIStructuredResponse, AIResponse } from "@/infra/protocols"
+import { openRouterApi } from "@/infra/config"
 
 export class AIService {
-  private readonly apiKey: string
   private readonly defaultModel = "mistralai/mistral-7b-instruct"
-  private readonly timeout = 30000
 
-  constructor(apiKey?: string) {
-    const key = apiKey || process.env.AI_KEY
-    if (!key) throw new ServiceException("Missing OpenRouter API key")
-    this.apiKey = key
+  constructor() {
+    const apiKey = process.env.AI_KEY
+    if (!apiKey) throw new ServiceException("Missing OpenRouter API key")
   }
 
   async generate(prompt: string, model: string = this.defaultModel): Promise<AIResponse> {
@@ -104,62 +101,25 @@ export class AIService {
     }
   }
 
-  private makeRequest(body: any): Promise<OpenRouterResponse> {
-    return new Promise((resolve, reject) => {
-      const postData = JSON.stringify(body)
-
-      const options = {
-        hostname: "openrouter.ai",
-        port: 443,
-        path: "/api/v1/chat/completions",
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(postData),
-          "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
-          "X-Title": process.env.APP_NAME || "TCC Project",
-        },
-        timeout: this.timeout,
+  private async makeRequest(body: any): Promise<OpenRouterResponse> {
+    try {
+      const response = await openRouterApi.post('/chat/completions', body)
+      return response.data
+    } catch (error: any) {
+      if (error.code === 'ECONNABORTED') {
+        throw new ServiceException("Request timeout - AI service took too long to respond")
       }
-
-      const req = https.request(options, (res) => {
-        let responseData = ""
-
-        res.on("data", (chunk) => {
-          responseData += chunk
-        })
-
-        res.on("end", () => {
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            try {
-              const jsonData = JSON.parse(responseData)
-              resolve(jsonData)
-            } catch (error) {
-              reject(new Error(`Failed to parse response: ${(error as Error).message}`))
-            }
-          } else {
-            reject(
-              new ServiceException(
-                `OpenRouter API error: ${res.statusCode} - ${responseData}`
-              )
-            )
-          }
-        })
-      })
-
-      req.on("error", (error) => {
-        reject(error)
-      })
-
-      req.on("timeout", () => {
-        req.destroy()
-        reject(new ServiceException("Request timeout - AI service took too long to respond"))
-      })
-
-      req.write(postData)
-      req.end()
-    })
+      
+      if (error.response) {
+        throw new ServiceException(
+          `OpenRouter API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`
+        )
+      }
+      
+      throw new ServiceException(
+        `Failed to connect to OpenRouter API: ${error.message}`
+      )
+    }
   }
 
   private isValidResponse(data: any): data is OpenRouterResponse {

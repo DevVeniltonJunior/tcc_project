@@ -57,7 +57,7 @@ export class DeleteBillController {
       if (!id) throw new BadRequestError("Mising required parameter: Id")
 
       const bill = await new FindBill(new BillQueryRepository()).execute({ id: id })
-      if (!bill) throw new NotFoundError("User not found")
+      if (!bill) throw new NotFoundError("Bill not found")
 
       const deleteBill = new DeleteBill(new BillCommandRepository())
 

@@ -9,10 +9,12 @@ import { DatabaseException } from '@/infra/exceptions'
 export class DeleteUserController {
   /**
    * @swagger
-   * /users:
+   * /users/{id}:
    *   delete:
    *     summary: Delete User
    *     tags: [Users]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -51,10 +53,17 @@ export class DeleteUserController {
   public static async handle(req: TRoute.handleParams<TDeleteUser.Request.body, TDeleteUser.Request.params, TDeleteUser.Request.query>): Promise<Response<TDeleteUser.Response>> {
     try {
       const id = req.params.id
+      const userId = req.userId
       const permanent = req.query.permanent
       const isPermanent = permanent ? permanent === "true" : false
 
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
       if (!id) throw new BadRequestError("Mising required parameter: Id")
+      
+      // Security check: users can only delete their own account
+      if (id !== userId) {
+        throw new BadRequestError("You don't have permission to delete this user")
+      }
 
       const user = await new FindUser(new UserQueryRepository()).execute({ id: id })
       if (!user) throw new NotFoundError("User not found")

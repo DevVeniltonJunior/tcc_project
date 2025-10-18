@@ -15,6 +15,8 @@ export class UpdateBillController {
    *   put:
    *     summary: Update Bill
    *     tags: [Bills]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -66,10 +68,18 @@ export class UpdateBillController {
   public static async handle(req: TRoute.handleParams<TUpdateBill.Request.body, TUpdateBill.Request.params, TUpdateBill.Request.query>): Promise<Response<TUpdateBill.Response>> {
     try {
       const billParam = req.body
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
       validateRequiredFields<TUpdateBill.Request.body>(billParam, ["id"])
 
       const bill = await new FindBill(new BillQueryRepository()).execute({ id: billParam.id })
       if (!bill) throw new NotFoundError("Bill not found")
+      
+      // Security check: ensure the bill belongs to the authenticated user
+      if (bill.getUserId().toString() !== userId) {
+        throw new BadRequestError("You don't have permission to update this bill")
+      }
       
       const updateBill = new UpdateBill(new BillCommandRepository())
       

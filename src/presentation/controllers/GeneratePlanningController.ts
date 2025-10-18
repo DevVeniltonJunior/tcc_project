@@ -20,6 +20,8 @@ export class GeneratePlanningController {
    *       The AI analyzes the user's financial situation and creates a realistic, achievable plan.
    *       Requires the user to have a registered salary.
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -27,15 +29,9 @@ export class GeneratePlanningController {
    *           schema:
    *             type: object
    *             required:
-   *               - userId
    *               - goal
    *               - goalValue
    *             properties:
-   *                userId:
-   *                  type: string
-   *                  format: uuid
-   *                  description: The unique identifier of the user
-   *                  example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
    *                description:
    *                  type: string
    *                  nullable: true
@@ -109,7 +105,7 @@ export class GeneratePlanningController {
    *               missingField:
    *                 summary: Missing required parameter
    *                 value:
-   *                   error: "Missing required parameter: userId"
+   *                   error: "Missing required parameter: goal"
    *               invalidParam:
    *                 summary: Invalid parameter value
    *                 value:
@@ -144,10 +140,12 @@ export class GeneratePlanningController {
   public static async handle(req: TRoute.handleParams<TGeneratePlanning.Request.body, TGeneratePlanning.Request.params, TGeneratePlanning.Request.query>): Promise<Response<TGeneratePlanning.Response>> {
     try {
       const planningParam = req.body
+      const userId = req.userId
       
-      validateRequiredFields<TGeneratePlanning.Request.body>(planningParam, ["userId", "goal", "goalValue"])
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      validateRequiredFields<TGeneratePlanning.Request.body>(planningParam, ["goal", "goalValue"])
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userId })
       if (!user) throw new NotFoundError("User not found")
       if (!user.getSalary()) throw new BadRequestError("User salary not found")
 

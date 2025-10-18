@@ -11,6 +11,8 @@ export class FindPlanningController {
    *   get:
    *     summary: Find Planning
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: query
    *         name: id
@@ -133,6 +135,12 @@ export class FindPlanningController {
   public static async handle(req: TRoute.handleParams<TFindPlanning.Request.body, TFindPlanning.Request.params, TFindPlanning.Request.query>): Promise<Response<TFindPlanning.Response>> {
     try {
       const filters = req.query
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      
+      // Override userId from query with authenticated userId
+      filters.userId = userId
       
       if (!filters || Object.keys(filters).length === 0) throw new BadRequestError("At least one filter must be provided")
 

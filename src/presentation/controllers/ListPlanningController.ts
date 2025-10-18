@@ -11,6 +11,8 @@ export class ListPlanningController {
    *   get:
    *     summary: List Planning
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: query
    *         name: id
@@ -136,6 +138,12 @@ export class ListPlanningController {
   public static async handle(req: TRoute.handleParams<TListPlanning.Request.body, TListPlanning.Request.params, TListPlanning.Request.query>): Promise<Response<TListPlanning.Response>> {
     try {
       const filters = req.query
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      
+      // Override userId from query with authenticated userId
+      filters.userId = userId
       
       if (filters.goalValue !== undefined) {
         const goalValue = Number(filters.goalValue)

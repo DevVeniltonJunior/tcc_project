@@ -11,6 +11,8 @@ export class FindBillController {
    *   get:
    *     summary: Find Bill
    *     tags: [Bills]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: query
    *         name: id
@@ -124,6 +126,12 @@ export class FindBillController {
   public static async handle(req: TRoute.handleParams<TFindBill.Request.body, TFindBill.Request.params, TFindBill.Request.query>): Promise<Response<TFindBill.Response>> {
     try {
       const filters = req.query
+      const userId = req.userId
+      
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      
+      // Override userId from query with authenticated userId
+      filters.userId = userId
       
       if (!filters || Object.keys(filters).length === 0) throw new BadRequestError("At least one filter must be provided")
 

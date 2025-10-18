@@ -15,6 +15,8 @@ export class CreateBillController {
    *   post:
    *     summary: Create Bill
    *     tags: [Bills]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -23,12 +25,8 @@ export class CreateBillController {
    *             type: object
    *             required:
    *               - name
-   *               - userId
    *               - value
    *             properties:
-   *               userId:
-   *                 type: string
-   *                 example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
    *               name:
    *                 type: string
    *                 example: "Internet"
@@ -88,17 +86,19 @@ export class CreateBillController {
   public static async handle(req: TRoute.handleParams<TCreateBill.Request.body, TCreateBill.Request.params, TCreateBill.Request.query>): Promise<Response<TCreateBill.Response>> {
     try {
       const billParam = req.body
+      const userId = req.userId
       
-      validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "userId", "value"])
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      validateRequiredFields<TCreateBill.Request.body>(billParam, ["name", "value"])
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: billParam.userId})
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userId })
       if (!user) throw new NotFoundError("User not found")
 
       const createBill = new CreateBill(new BillCommandRepository())
 
       const entity = await createBill.execute(new Bill(
           Id.generate(),
-          new Id(billParam.userId),
+          new Id(userId),
           new Name(billParam.name),
           new MoneyValue(billParam.value),
           new DateEpoch(new Date()),

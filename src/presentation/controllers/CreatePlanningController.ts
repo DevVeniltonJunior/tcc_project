@@ -16,6 +16,8 @@ export class CreatePlanningController {
    *   post:
    *     summary: Create Planning
    *     tags: [Plannings]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:    
    *       required: true
    *       content:
@@ -23,15 +25,11 @@ export class CreatePlanningController {
    *           schema:
    *             type: object
    *             required:
-   *               - userId
    *               - name
    *               - goal
    *               - goalValue
    *               - plan
    *             properties:
-   *                userId:
-   *                  type: string
-   *                  example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
    *                name:
    *                  type: string
    *                  example: "Car"
@@ -96,17 +94,19 @@ export class CreatePlanningController {
   public static async handle(req: TRoute.handleParams<TCreatePlanning.Request.body, TCreatePlanning.Request.params, TCreatePlanning.Request.query>): Promise<Response<TCreatePlanning.Response>> {
     try {
       const planningParam = req.body
+      const userId = req.userId
       
-      validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["userId", "name", "goal", "goalValue", "plan"])
+      if (!userId) throw new BadRequestError("User ID not found in authentication token")
+      validateRequiredFields<TCreatePlanning.Request.body>(planningParam, ["name", "goal", "goalValue", "plan"])
 
-      const user = await new FindUser(new UserQueryRepository()).execute({ id: planningParam.userId })
+      const user = await new FindUser(new UserQueryRepository()).execute({ id: userId })
       if (!user) throw new NotFoundError("User not found")
 
       const createPlanning = new CreatePlanning(new PlanningCommandRepository())
 
       const entity = await createPlanning.execute(new Planning(
           Id.generate(),
-          new Id(planningParam.userId),
+          new Id(userId),
           new Name(planningParam.name),
           new Goal(planningParam.goal),
           new MoneyValue(planningParam.goalValue),

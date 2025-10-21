@@ -1,199 +1,199 @@
 # TCC Project
 
-API REST com sistema de autenticação JWT para gerenciamento de usuários, contas e planejamentos financeiros.
+REST API with JWT authentication for managing users, bills, and financial plannings.
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
-### Pré-requisitos
+### Prerequisites
 
-- Node.js (v18 ou superior)
+- Node.js (v18 or higher)
 - PostgreSQL
-- npm ou yarn
+- npm or yarn
 
-### Instalação
+### Installation
 
-1. Clone o repositório
+1. Clone the repository
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd tcc_project
 ```
 
-2. Instale as dependências
+2. Install dependencies
 ```bash
 npm install
 ```
 
-3. Configure as variáveis de ambiente
+3. Configure environment variables
 
-Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência). Abaixo um exemplo completo das variáveis suportadas pelo código:
+Create a `.env` file at the project root (use `.env.example` as reference). Below is a complete example of the variables supported by the code:
 
 ```env
-# Ambiente
+# Environment
 PROD=false
 PORT=3000
 
-# Frontend URL (usado quando PROD=true e para links de recuperação de senha)
+# Frontend URL (used when PROD=true and for password reset links)
 FRONTEND_URL=http://localhost:5173
 
-# Banco de Dados (PostgreSQL)
-# Exemplo (compatível com docker-compose incluso):
+# Database (PostgreSQL)
+# Example (compatible with the included docker-compose):
 # postgresql://root269:sh4432__@localhost:5432/financial_db?schema=public
 DATABASE_URL=
 
 # JWT
 JWT_SECRET=your-jwt-secret-here
-# Opcional: segredo específico para tokens de recuperação de senha
+# Optional: specific secret for password reset tokens
 JWT_PASSWORD_RESET_SECRET=
 
-# SMTP (necessário para funcionalidades de e-mail: esqueci/redefinir senha)
+# SMTP (required for email features: forgot/reset password)
 SMTP_SERVER=
 SMTP_PORT=
 SMTP_USER=
 SMTP_PASSWORD=
 
-# Integrações (Axios/OpenRouter)
+# Integrations (Axios/OpenRouter)
 AI_KEY=
-# Metadados usados nos headers quando chamando a OpenRouter API
+# Metadata sent in headers when calling the OpenRouter API
 APP_URL=http://localhost:3000
 APP_NAME=TCC Project
 ```
 
-#### Banco de dados com Docker (opcional)
-Se preferir subir um Postgres local rapidamente:
+#### Database with Docker (optional)
+If you prefer to spin up a local Postgres quickly:
 ```bash
 docker-compose up -d postgres
 ```
-Em seguida, ajuste a `DATABASE_URL` no `.env` para apontar para o banco acima.
+Then adjust `DATABASE_URL` in `.env` to point to the database above.
 
-4. Gere o Prisma Client
+4. Generate Prisma Client
 ```bash
 npm run prisma:generate
 ```
 
-5. Execute as migrações do banco de dados
+5. Run database migrations
 ```bash
-# Aplica migrações existentes (deploy)
+# Apply existing migrations (deploy)
 npm run prisma:apply
 
-# Desenvolvimento: criar uma nova migração (substitua <nome>)
-npm run prisma:migrate <nome>
+# Development: create a new migration (replace <name>)
+npm run prisma:migrate <name>
 ```
 
-6. Inicie o servidor
+6. Start the server
 ```bash
-# Desenvolvimento
+# Development
 npm run dev
 
-# Produção
+# Production
 npm run run
 ```
 
-O servidor estará disponível em `http://localhost:3000`
+The server will be available at `http://localhost:3000`
 
-## 🔐 Autenticação
+## 🔐 Authentication
 
-Este projeto utiliza autenticação JWT. **Todas as rotas requerem autenticação, exceto:**
+This project uses JWT authentication. **All routes require authentication, except:**
 
-- `POST /register` - Registro de novos usuários
-- `POST /login` - Login de usuários
-- `POST /forgot-password` - Recuperação de senha
-- `POST /reset-password` - Redefinição de senha
+- `POST /register` — Register new users
+- `POST /login` — User login
+- `POST /forgot-password` — Password recovery
+- `POST /reset-password` — Password reset
 
-Para acessar rotas protegidas, inclua o token JWT no header:
+To access protected routes, include the JWT token in the header:
 ```
-Authorization: Bearer <seu-token-aqui>
+Authorization: Bearer <your-token-here>
 ```
 
-📖 **Documentação de autenticação:** consulte as rotas públicas e protegidas em `http://localhost:3000/api-docs` (Swagger).
+📖 **Authentication docs:** see public and protected routes at `http://localhost:3000/api-docs` (Swagger).
 
 ## 🌐 CORS (Cross-Origin Resource Sharing)
 
-O projeto possui configuração dinâmica de CORS baseada na variável de ambiente `PROD`:
+The project has dynamic CORS configuration based on the `PROD` environment variable:
 
-### Modo Desenvolvimento (`PROD=false`)
-- ✅ Aceita requisições de **qualquer origem** (`*`)
-- Ideal para desenvolvimento local e testes
+### Development Mode (`PROD=false`)
+- ✅ Accepts requests from **any origin** (`*`)
+- Ideal for local development and testing
 
-### Modo Produção (`PROD=true`)
-- 🔒 Aceita requisições **apenas da URL configurada** em `FRONTEND_URL`
-- Aumenta a segurança em ambiente de produção
+### Production Mode (`PROD=true`)
+- 🔒 Accepts requests **only from the URL configured** in `FRONTEND_URL`
+- Increases security in production
 
-## 📡 Cliente HTTP (Axios) - APIs Externas
+## 📡 HTTP Client (Axios) — External APIs
 
-⚠️ **Este é um BACKEND**: O Axios é usado para consumir **APIs externas** (IA, CEP, pagamentos), não para o frontend consumir esta API.
+⚠️ **This is a BACKEND**: Axios is used to consume **external APIs** (AI, CEP, payments), not for a frontend to consume this API.
 
-### OpenRouter API (IA)
+### OpenRouter API (AI)
 ```typescript
 import { openRouterApi } from '@/infra/config/axios'
 
 const response = await openRouterApi.post('/chat/completions', {
   model: 'mistralai/mistral-7b-instruct',
-  messages: [{ role: 'user', content: 'Crie um planejamento' }]
+  messages: [{ role: 'user', content: 'Create a planning' }]
 })
 ```
 
-### APIs Externas Genéricas
+### Generic External APIs
 ```typescript
 import { externalApi } from '@/infra/config/axios'
 
-// Consultar CEP
+// Lookup CEP (postal code)
 const cep = await externalApi.get('https://viacep.com.br/ws/01001000/json/')
 
-// Enviar email via SendGrid
+// Send email via SendGrid
 await externalApi.post('https://api.sendgrid.com/v3/mail/send', data)
 ```
 
-Os clientes `openRouterApi` e `externalApi` são exportados de `src/infra/config/axios/index.ts`.
+The clients `openRouterApi` and `externalApi` are exported from `src/infra/config/axios/index.ts`.
 
-## 📚 Documentação da API
+## 📚 API Documentation
 
-Acesse a documentação interativa Swagger em: `http://localhost:3000/api-docs`
+Access the interactive Swagger docs at: `http://localhost:3000/api-docs`
 
-## 🧪 Testes
+## 🧪 Tests
 
 ```bash
-# Todos os testes
+# All tests
 npm test
 
-# Apenas testes unitários
+# Unit tests only
 npm run test:unit
 
-# Apenas testes de integração
+# Integration tests only
 npm run test:integration
 
-# Todos (unit + integration)
+# All (unit + integration)
 npm run test:all
 ```
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 src/
-├── domain/           # Entidades, casos de uso e regras de negócio
-├── infra/            # Infraestrutura (repositórios, serviços externos)
-├── presentation/     # Controllers, middlewares e protocolos HTTP
+├── domain/           # Entities, use cases and business rules
+├── infra/            # Infrastructure (repositories, external services)
+├── presentation/     # Controllers, middlewares and HTTP protocols
 └── ...
 ```
 
-## 🛠️ Tecnologias
+## 🛠️ Technologies
 
-- **Node.js** - Runtime JavaScript
-- **TypeScript** - Superset tipado do JavaScript
-- **Express** - Framework web
-- **Prisma** - ORM para banco de dados
-- **JWT** - Autenticação
-- **Axios** - Cliente HTTP
-- **CORS** - Controle de acesso cross-origin
-- **Jest** - Framework de testes
-- **Swagger** - Documentação da API
+- **Node.js** — JavaScript runtime
+- **TypeScript** — Typed superset of JavaScript
+- **Express** — Web framework
+- **Prisma** — Database ORM
+- **JWT** — Authentication
+- **Axios** — HTTP client
+- **CORS** — Cross-origin access control
+- **Jest** — Test framework
+- **Swagger** — API documentation
 
-## 📝 Scripts Disponíveis
+## 📝 Available Scripts
 
-- `npm run dev` - Inicia o servidor em modo desenvolvimento
-- `npm run build` - Compila o projeto
-- `npm run run` - Executa o projeto compilado
-- `npm test` - Executa todos os testes
-- `npm run test:all` - Executa unit e integration em sequência
-- `npm run prisma:migrate` - Cria nova migração
-- `npm run prisma:generate` - Gera o Prisma Client
-- `npm run prisma:apply` - Aplica migrações pendentes
+- `npm run dev` — Start the server in development mode
+- `npm run build` — Build the project
+- `npm run run` — Run the compiled project
+- `npm test` — Run all tests
+- `npm run test:all` — Run unit and integration tests in sequence
+- `npm run prisma:migrate` — Create a new migration
+- `npm run prisma:generate` — Generate Prisma Client
+- `npm run prisma:apply` — Apply pending migrations

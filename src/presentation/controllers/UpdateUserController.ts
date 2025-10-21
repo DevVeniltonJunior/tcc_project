@@ -3,7 +3,7 @@ import { Id, Name, Email, DateEpoch, MoneyValue } from '@/domain/valueObjects'
 import { UserCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TUpdateUser, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { UserDTO } from '@/domain/dtos'
 import { DatabaseException } from '@/infra/exceptions'
@@ -86,12 +86,18 @@ export class UpdateUserController {
         data: { message: 'User updated successfully' }
       }
     } catch(err: any) {
+      console.log(err.stack)
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
         data: { error: err.message }
       }
 
-      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
         statusCode: 404,
         data: { error: err.message }
       }

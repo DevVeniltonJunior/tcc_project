@@ -18,7 +18,7 @@ model User {
   salary     Float?
   password   Password?
   bills      Bill[]
-  planings   Planing[]
+  plannings  Planning[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime?  @updatedAt
   deletedAt  DateTime?
@@ -34,7 +34,7 @@ model Password {
   user      User      @relation(fields: [userId], references: [id])
 }
 
-model Planing {
+model Planning {
   id              String    @id @default(uuid())
   userId          String
   name            String

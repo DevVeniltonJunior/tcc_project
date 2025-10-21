@@ -1,8 +1,9 @@
 import { ListUser } from '@/domain/usecases'
 import { UserQueryRepository } from '@/infra/repositories'
 import { TListUser, TRoute, Response } from '@/presentation/protocols'
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class ListUserController {
   /**
@@ -64,6 +65,21 @@ export class ListUserController {
    *           format: date-time 
    *           example: "1975-09-25T22:57:22.914Z"
    *         required: false
+   *       - in: query
+   *         name: sortBy
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Field to sort by (e.g., name, email, createdAt)
+   *         example: "createdAt"
+   *       - in: query
+   *         name: order
+   *         schema:
+   *           type: string
+   *           enum: [asc, desc]
+   *         required: false
+   *         description: Sort order (default asc)
+   *         example: "desc"
    *     responses:
    *       200:
    *         description: List User
@@ -118,7 +134,7 @@ export class ListUserController {
    */
   public static async handle(req: TRoute.handleParams<TListUser.Request.body, TListUser.Request.params, TListUser.Request.query>): Promise<Response<TListUser.Response>> {
     try {
-      const filters = req.query
+      const { sortBy, order, ...filters } = req.query
       
       if (filters.salary !== undefined) {
         const salary = Number(filters.salary)
@@ -126,18 +142,34 @@ export class ListUserController {
 
         filters.salary = salary
       }
+      
+      // Validate order parameter
+      if (order && order !== 'asc' && order !== 'desc') {
+        throw new BadRequestError("Query parameter 'order' must be 'asc' or 'desc'")
+      }
 
       const findUser = new ListUser(new UserQueryRepository())
 
-      const entity = await findUser.execute(filters)
+      const entity = await findUser.execute(filters, sortBy, order)
   
       return {
         statusCode: 200,
         data: entity.map(user => user.toJson())
       }
     } catch(err: any) {
+      console.log(err.stack)
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

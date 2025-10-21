@@ -11,7 +11,7 @@ export class PlanningCommandRepository implements IPlanningCommandRepository {
   private readonly _db
 
   constructor() {
-    this._db = PRISMA_CLIENT.planing
+    this._db = PRISMA_CLIENT.planning
   }
 
   public async create(entity: Planning): Promise<Planning> {

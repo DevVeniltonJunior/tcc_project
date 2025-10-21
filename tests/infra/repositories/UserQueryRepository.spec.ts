@@ -60,7 +60,7 @@ describe("[Repository] UserQueryRepository", () => {
 
       const result = await repo.get(id)
 
-      expect(prismaMock.findUnique).toHaveBeenCalledWith({ where: { id: id.toString() }, include: { password: true, bills: true, planings: true } })
+      expect(prismaMock.findUnique).toHaveBeenCalledWith({ where: { id: id.toString() }, include: { password: true, bills: true, plannings: true } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
       expect(result).toBe(entity)
     })
@@ -101,7 +101,7 @@ describe("[Repository] UserQueryRepository", () => {
 
       const result = await repo.getByEmail(email)
 
-      expect(prismaMock.findUnique).toHaveBeenCalledWith({ where: { email: email.toString() }, include: { password: true, bills: true, planings: true } })
+      expect(prismaMock.findUnique).toHaveBeenCalledWith({ where: { email: email.toString() }, include: { password: true, bills: true, plannings: true } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
       expect(result).toBe(entity)
     })
@@ -147,7 +147,7 @@ describe("[Repository] UserQueryRepository", () => {
         stringFields: ["id", "name", "email"],
         dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
       })
-      expect(prismaMock.findFirst).toHaveBeenCalledWith({ where: { name: "John" }, include: { password: true, bills: true, planings: true } })
+      expect(prismaMock.findFirst).toHaveBeenCalledWith({ where: { name: "John" }, include: { password: true, bills: true, plannings: true } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(dbUser)
       expect(result).toBe(entity)
     })
@@ -212,7 +212,7 @@ describe("[Repository] UserQueryRepository", () => {
         stringFields: ["id", "name", "email"],
         dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
       })
-      expect(prismaMock.findMany).toHaveBeenCalledWith({ where: { name: "John" }, include: { password: true, bills: true, planings: true } })
+      expect(prismaMock.findMany).toHaveBeenCalledWith({ where: { name: "John" }, include: { password: true, bills: true, plannings: true } })
       expect(UserAdapter.toEntity).toHaveBeenCalledTimes(2)
       expect(result).toEqual(entities)
     })

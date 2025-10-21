@@ -1,8 +1,9 @@
 import { FindBill } from '@/domain/usecases'
 import { BillQueryRepository } from '@/infra/repositories'
 import { TFindBill, TRoute, Response } from '@/presentation/protocols'
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
+import { DatabaseException } from '@/infra/exceptions'
 
 export class FindBillController {
   /**
@@ -158,8 +159,19 @@ export class FindBillController {
         data: entity.toJson()
       }
     } catch(err: any) {
+      console.log(err.stack)
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
+        data: { error: err.message }
+      }
+
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
+        statusCode: 404,
         data: { error: err.message }
       }
 

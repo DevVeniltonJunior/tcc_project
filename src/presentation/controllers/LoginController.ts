@@ -4,7 +4,7 @@ import { PasswordQueryRepository, UserQueryRepository } from '@/infra/repositori
 import { TokenService } from '@/infra/utils/TokenService'
 import { TLogin, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { DatabaseException } from '@/infra/exceptions'
 
@@ -128,25 +128,20 @@ export class LoginController {
         }
       }
     } catch(err: any) {
-      if (err instanceof BadRequestError || err instanceof InvalidParam) {
-        return {
-          statusCode: 400,
-          data: { error: err.message }
-        }
+      console.log(err.stack)
+      if (err instanceof BadRequestError || err instanceof InvalidParam) return {
+        statusCode: 400,
+        data: { error: err.message }
       }
 
-      if (err instanceof DatabaseException && err.message.includes("User not found")) {
-        return {
-          statusCode: 404,
-          data: { error: "User not found" }
-        }
+      if (err instanceof UnauthorizedError || err.message === "Invalid credentials") return {
+        statusCode: 401,
+        data: { error: err.message }
       }
 
-      if (err.message === "Invalid credentials") {
-        return {
-          statusCode: 401,
-          data: { error: "Invalid credentials" }
-        }
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
+        statusCode: 404,
+        data: { error: err.message }
       }
 
       return {

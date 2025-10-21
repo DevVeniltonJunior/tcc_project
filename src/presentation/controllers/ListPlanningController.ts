@@ -161,6 +161,7 @@ export class ListPlanningController {
         data: entity.map(Planning => Planning.toJson())
       }
     } catch(err: any) {
+      console.log(err.stack)
       if (err instanceof BadRequestError || err instanceof InvalidParam) return {
         statusCode: 400,
         data: { error: err.message }

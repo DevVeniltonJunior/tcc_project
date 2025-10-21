@@ -10,11 +10,27 @@ export class ListPlanningController {
    * @swagger
    * /plannings:
    *   get:
-   *     summary: List Planning
+   *     summary: List Planning (with pagination)
    *     tags: [Plannings]
    *     security:
    *       - bearerAuth: []
    *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *         required: false
+   *         description: Page number (default 1)
+   *         example: 1
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *         required: false
+   *         description: Number of items per page (default 10)
+   *         example: 10
    *       - in: query
    *         name: id
    *         schema:
@@ -80,49 +96,67 @@ export class ListPlanningController {
    *         required: false
    *     responses:
    *       200:
-   *         description: List Planning
+   *         description: List Planning with pagination
    *         content:
    *           application/json:
    *             schema:
-   *                 type: array
-   *                 description: List of Plannings (TPlanning.Entity[])
-   *                 items:
-   *                    type: object
-   *                    properties:
-   *                     id:
-   *                       type: string
-   *                       example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
-   *                     userId:
-   *                       type: string
-   *                       example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
-   *                     name:
-   *                       type: string
-   *                       example: "Car"
-   *                     goal:
-   *                       type: string
-   *                       example: "Mazda miata"
-   *                     goalValue:
-   *                       type: number
-   *                       example: 90000.00
-   *                     description:
-   *                       type: string
-   *                       nullable: true
-   *                       example: "Buy a car"
-   *                     plan:
-   *                       type: string
-   *                       nullable: true
-   *                       example: "Save money"
-   *                     createdAt:
-   *                       type: string
-   *                       format: date-time
-   *                     updatedAt:
-   *                       type: string
-   *                       nullable: true
-   *                       format: date-time
-   *                     deletedAt:
-   *                       type: string
-   *                       nullable: true
-   *                       format: date-time
+   *                 type: object
+   *                 properties:
+   *                   data:
+   *                     type: array
+   *                     description: List of Plannings (TPlanning.Entity[])
+   *                     items:
+   *                       type: object
+   *                       properties:
+   *                         id:
+   *                           type: string
+   *                           example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
+   *                         userId:
+   *                           type: string
+   *                           example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
+   *                         name:
+   *                           type: string
+   *                           example: "Car"
+   *                         goal:
+   *                           type: string
+   *                           example: "Mazda miata"
+   *                         goalValue:
+   *                           type: number
+   *                           example: 90000.00
+   *                         description:
+   *                           type: string
+   *                           nullable: true
+   *                           example: "Buy a car"
+   *                         plan:
+   *                           type: string
+   *                           nullable: true
+   *                           example: "Save money"
+   *                         createdAt:
+   *                           type: string
+   *                           format: date-time
+   *                         updatedAt:
+   *                           type: string
+   *                           nullable: true
+   *                           format: date-time
+   *                         deletedAt:
+   *                           type: string
+   *                           nullable: true
+   *                           format: date-time
+   *                   pagination:
+   *                     type: object
+   *                     properties:
+   *                       page:
+   *                         type: integer
+   *                         example: 1
+   *                       limit:
+   *                         type: integer
+   *                         example: 10
+   *                       total:
+   *                         type: integer
+   *                         example: 50
+   *                       totalPages:
+   *                         type: integer
+   *                         example: 5
    *       500:
    *         description: Internal Server Error
    *         content:
@@ -138,7 +172,7 @@ export class ListPlanningController {
    */
   public static async handle(req: TRoute.handleParams<TListPlanning.Request.body, TListPlanning.Request.params, TListPlanning.Request.query>): Promise<Response<TListPlanning.Response>> {
     try {
-      const filters = req.query
+      const { page, limit, ...filters } = req.query
       const userId = req.userId
       
       if (!userId) throw new BadRequestError("User ID not found in authentication token")
@@ -153,13 +187,33 @@ export class ListPlanningController {
         filters.goalValue = goalValue
       }
 
-      const findPlanning = new ListPlanning(new PlanningQueryRepository())
+      // Validate and parse pagination parameters
+      let pageNumber: number | undefined
+      let limitNumber: number | undefined
 
-      const entity = await findPlanning.execute(filters)
+      if (page !== undefined) {
+        pageNumber = Number(page)
+        if (Number.isNaN(pageNumber) || pageNumber < 1) {
+          throw new BadRequestError("Query parameter 'page' must be a positive number")
+        }
+      }
+
+      if (limit !== undefined) {
+        limitNumber = Number(limit)
+        if (Number.isNaN(limitNumber) || limitNumber < 1) {
+          throw new BadRequestError("Query parameter 'limit' must be a positive number")
+        }
+      }
+
+      const repository = new PlanningQueryRepository()
+      const result = await repository.listPaginated(filters, { page: pageNumber, limit: limitNumber })
   
       return {
         statusCode: 200,
-        data: entity.map(Planning => Planning.toJson())
+        data: {
+          data: result.data.map(Planning => Planning.toJson()),
+          pagination: result.pagination
+        }
       }
     } catch(err: any) {
       console.log(err.stack)

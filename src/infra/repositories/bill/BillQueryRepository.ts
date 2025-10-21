@@ -1,5 +1,5 @@
 import { Bill } from "@/domain/entities";
-import { IBillQueryRepository, TFilter, TBill } from "@/domain/protocols";
+import { IBillQueryRepository, TFilter, TBill, TPagination } from "@/domain/protocols";
 import { Id } from "@/domain/valueObjects";
 import { PrismaClient } from '@prisma/client'
 import { BillAdapter } from "@/infra/adpters";
@@ -43,6 +43,38 @@ export class BillQueryRepository implements IBillQueryRepository {
     const Bills = await this._db.findMany({ where: where })
 
     return Bills.map(Bill => BillAdapter.toEntity(Bill))
+  }
+
+  public async listPaginated(filters?: TFilter<TBill.Model>, pagination?: TPagination.Request): Promise<TPagination.Response<Bill>> {
+    const where = buildWhereInput<TBill.Model>(filters, {
+      stringFields: ["id", "name", "userId", "description"],
+      dateFields: ["createdAt", "updatedAt", "deletedAt"],
+    })
+    
+    const page = pagination?.page || 1
+    const limit = pagination?.limit || 10
+    const skip = (page - 1) * limit
+
+    const [Bills, total] = await Promise.all([
+      this._db.findMany({ 
+        where: where,
+        skip: skip,
+        take: limit
+      }),
+      this._db.count({ where: where })
+    ])
+
+    const totalPages = Math.ceil(total / limit)
+
+    return {
+      data: Bills.map(Bill => BillAdapter.toEntity(Bill)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    }
   }
   
 }

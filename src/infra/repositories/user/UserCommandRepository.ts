@@ -40,10 +40,10 @@ export class UserCommandRepository implements IUserCommandRepository {
       }
       if (planning) {
         delete (<any>planning).userId
-        data.planings = { create: planning }
+        data.plannings = { create: planning }
       }
 
-      const createdUser = await this._db.create({ data: data, include: { password: true, bills: true, planings: true } })
+      const createdUser = await this._db.create({ data: data, include: { password: true, bills: true, plannings: true } })
 
       return UserAdapter.toEntity(createdUser)
     }

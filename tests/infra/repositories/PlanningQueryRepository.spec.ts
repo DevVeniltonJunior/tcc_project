@@ -12,7 +12,7 @@ jest.mock("@prisma/client", () => {
     findFirst: jest.fn(),
     findMany: jest.fn(),
   }
-  return { PrismaClient: jest.fn(() => ({ planing: mPlanning })) }
+  return { PrismaClient: jest.fn(() => ({ planning: mPlanning })) }
 })
 
 jest.mock("@/infra/adpters", () => ({

@@ -50,7 +50,7 @@ describe("[Repository] UserCommandRepository", () => {
       const result = await repo.create(entity)
 
       expect(UserAdapter.toModel).toHaveBeenCalledWith(entity)
-      expect(prismaMock.create).toHaveBeenCalledWith({ data: model, include: { password: true, bills: true, planings: true } })
+      expect(prismaMock.create).toHaveBeenCalledWith({ data: model, include: { password: true, bills: true, plannings: true } })
       expect(UserAdapter.toEntity).toHaveBeenCalledWith(model)
       expect(result).toBe(entity)
     })

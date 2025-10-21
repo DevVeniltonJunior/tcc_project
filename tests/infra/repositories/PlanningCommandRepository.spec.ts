@@ -12,7 +12,7 @@ jest.mock("@prisma/client", () => {
   }
   return {
     PrismaClient: jest.fn(() => ({
-      planing: mPlanning,
+      planning: mPlanning,
     })),
   }
 })

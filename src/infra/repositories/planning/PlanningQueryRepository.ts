@@ -12,7 +12,7 @@ export class PlanningQueryRepository implements IPlanningQueryRepository {
   private readonly _db
 
   constructor() {
-    this._db = PRISMA_CLIENT.planing
+    this._db = PRISMA_CLIENT.planning
   }
 
   public async get(id: Id): Promise<Planning> {

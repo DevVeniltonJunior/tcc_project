@@ -17,7 +17,7 @@ export class UserQueryRepository implements IUserQueryRepository {
 
   public async get(id: Id): Promise<User> {
     try {
-      const user = await this._db.findUnique({where: { id: id.toString() }, include: { password: true, bills: true, planings: true }})
+      const user = await this._db.findUnique({where: { id: id.toString() }, include: { password: true, bills: true, plannings: true }})
 
       if (!user) throw new DatabaseException("User not found")
 
@@ -30,7 +30,7 @@ export class UserQueryRepository implements IUserQueryRepository {
 
   public async getByEmail(email: Email): Promise<User> {
     try {
-      const user = await this._db.findUnique({where: { email: email.toString() }, include: { password: true, bills: true, planings: true }})
+      const user = await this._db.findUnique({where: { email: email.toString() }, include: { password: true, bills: true, plannings: true }})
 
       if (!user) throw new DatabaseException("User not found")
 
@@ -47,7 +47,7 @@ export class UserQueryRepository implements IUserQueryRepository {
         stringFields: ["id", "name", "email"],
         dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
       })
-      const user = await this._db.findFirst({ where: where, include: { password: true, bills: true, planings: true }})
+      const user = await this._db.findFirst({ where: where, include: { password: true, bills: true, plannings: true }})
 
       if (!user) throw new DatabaseException("User not found")
 
@@ -64,7 +64,7 @@ export class UserQueryRepository implements IUserQueryRepository {
         stringFields: ["id", "name", "email"],
         dateFields: ["birthdate", "createdAt", "updatedAt", "deletedAt"],
       })
-      const users = await this._db.findMany({ where: where, include: { password: true, bills: true, planings: true }})
+      const users = await this._db.findMany({ where: where, include: { password: true, bills: true, plannings: true }})
 
       return users.map(user => UserAdapter.toEntity(user))
     }

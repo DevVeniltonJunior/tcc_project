@@ -8,9 +8,10 @@ export class GetBillsSummary {
   
   public async execute(userId: Id): Promise<TBillsSummary> {
     try {
-      const bills = await this.billQueryRepository.list({ userId: userId.toString() })
+      const rawBills = await this.billQueryRepository.list({ userId: userId.toString() })
+      const bills = rawBills.filter(bill => !bill.getDeletedAt())
   
-      const fixesBills = bills.filter((bill: Bill) => bill.getInstallmentsNumber() === undefined)
+      const fixesBills = bills.filter((bill: Bill) => !bill.getInstallmentsNumber())
       const monthlyMiscBills = bills.filter((bill: Bill) => bill.getInstallmentsNumber()?.toNumber() === 1)
       const installment_bills = bills.filter(
         (bill: Bill) => bill.getInstallmentsNumber()?.toNumber() !== undefined && bill.getInstallmentsNumber()!.toNumber() > 1
@@ -48,9 +49,10 @@ export class GetBillsSummary {
       const totalInstallmentValue = installmentBillsActiveFiltered.reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
       const totalFixedBillsValue = fixesBills.reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
       const totalMonthlyMiscBillsValue = thisMonthMiscBills.reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
-      const partialValueNextMonth = nextMonthInstallmentBills["1"].reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
-      const partialValue2MonthsLater = nextMonthInstallmentBills["2"].reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
-      const partialValue3MonthsLater = nextMonthInstallmentBills["3"].reduce((acc, bill) => acc + bill.getValue().toNumber(), 0)
+      const totalInstallmentMonthlyValue = installmentBillsActiveFiltered.reduce((acc, bill) => acc + (bill.getValue().toNumber() / bill.getInstallmentsNumber()!.toNumber()), 0)
+      const partialValueNextMonth = nextMonthInstallmentBills["1"].reduce((acc, bill) => acc + (bill.getValue().toNumber() / bill.getInstallmentsNumber()!.toNumber()), 0)
+      const partialValue2MonthsLater = nextMonthInstallmentBills["2"].reduce((acc, bill) => acc + (bill.getValue().toNumber() / bill.getInstallmentsNumber()!.toNumber()), 0)
+      const partialValue3MonthsLater = nextMonthInstallmentBills["3"].reduce((acc, bill) => acc + (bill.getValue().toNumber() / bill.getInstallmentsNumber()!.toNumber()), 0)
   
       const totalBillAmount = totalInstallmentValue + totalFixedBillsValue + totalMonthlyMiscBillsValue + partialValueNextMonth + partialValue2MonthsLater + partialValue3MonthsLater
   
@@ -59,7 +61,7 @@ export class GetBillsSummary {
       return {
         billsActiveCount: billsActiveCount,
         totalBillAmount: totalBillAmount,
-        totalValue: totalValue,
+        totalValue: totalInstallmentMonthlyValue,
         totalInstallmentValue: totalInstallmentValue,
         totalFixedBillsValue: totalFixedBillsValue,
         totalMonthlyMiscBillsValue: totalMonthlyMiscBillsValue,

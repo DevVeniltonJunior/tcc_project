@@ -1,5 +1,5 @@
 import { FindUser, GeneratePlanning } from '@/domain/usecases'
-import { MoneyValue, Description, Goal } from '@/domain/valueObjects'
+import { MoneyValue, Description, Goal, Id, Name, Plan, DateEpoch } from '@/domain/valueObjects'
 import { BillQueryRepository, PlanningCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TRoute, Response, TGeneratePlanning } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
@@ -8,6 +8,7 @@ import { InvalidParam } from '@/domain/exceptions'
 import { DatabaseException } from '@/infra/exceptions'
 import { AIService } from '@/infra/utils'
 import { GetBillsSummary } from '@/domain/utils'
+import { Planning } from '@/domain/entities'
 
 export class GeneratePlanningController {
   /**
@@ -17,18 +18,6 @@ export class GeneratePlanningController {
    *     summary: Generate AI-powered financial planning
    *     description: |
    *       Generates an AI-powered financial planning based on the user's current financial situation.
-   *       
-   *       **How it works:**
-   *       1. Validates the authenticated user and required fields
-   *       2. Retrieves user's salary and current bills
-   *       3. Analyzes financial data using AI
-   *       4. Creates a personalized, realistic action plan
-   *       5. Saves the planning for future reference
-   *       
-   *       **Requirements:**
-   *       - User must be authenticated (Bearer token required)
-   *       - User must have a registered salary
-   *       - Goal and goal value are mandatory fields
    *       
    *       **AI Analysis includes:**
    *       - Income vs expenses analysis
@@ -73,6 +62,41 @@ export class GeneratePlanningController {
    *                    The total monetary value needed to achieve the goal.
    *                    Must be a positive number greater than zero.
    *                  example: 90000.00
+   *                previousPlanning:
+   *                  type: object
+   *                  nullable: true
+   *                  properties:
+   *                    id:
+   *                      type: string
+   *                      format: uuid
+   *                      description: Unique identifier for the previous planning. Use this ID to reference the previous planning in future operations.
+   *                      example: "2acee5ff-d55b-47a8-9caf-bece2ba102db23"
+   *                    name:
+   *                      type: string
+   *                      description: Name of the previous planning
+   *                      example: "Mazda Miata 2023 Acquisition Plan"
+   *                    description:
+   *                      type: string
+   *                      nullable: true
+   *                      description: Description of the previous planning
+   *                      example: "This planning was generated to achieve the goal of purchasing a Mazda Miata 2023."
+   *                    plan:
+   *                      type: string
+   *                      description: The plan to achieve the goal. It must to be a list of steps to achieve the goal. Each step must to be a concise and descriptive step. The plan must to be in the user's language and currency. It must to be a detailed plan to achieve the goal. It must to be a list of steps to achieve the goal. Each step must to be a concise and descriptive step. The plan must to be in the user's language and currency.
+   *                      example: |
+   *                        **Financial Analysis:**
+   *                        - Monthly Income: R$ 5,000.00
+   *                        - Current Expenses: R$ 3,200.00
+   *                        - Available for Savings: R$ 1,800.00
+   *                        **Recommended Strategy:**
+   *                        - Save R$ 1,500.00 monthly (83% of available income)
+   *                        - Maintain R$ 300.00 emergency buffer
+   *                        - Target achievement: 60 months (5 years)
+   *                        - Review and reduce subscription bills (potential savings: R$ 200/month)
+   *                        - Consider additional income sources to accelerate timeline
+   *                        - Set up automatic transfer to savings account on payday
+   *                        - Monitor progress monthly and adjust as needed
+   *
    *     responses:
    *       200:
    *         description: Planning successfully generated with AI recommendations
@@ -243,7 +267,17 @@ export class GeneratePlanningController {
         user,
         new Goal(planningParam.goal),
         new MoneyValue(planningParam.goalValue),
-        planningParam.description ? new Description(planningParam.description) : undefined
+        planningParam.description ? new Description(planningParam.description) : undefined,
+        planningParam.previousPlanning ? new Planning(
+          new Id(planningParam.previousPlanning.id),
+          new Id(userId),
+          new Name(planningParam.previousPlanning.name),
+          new Goal(planningParam.previousPlanning.goal),
+          new MoneyValue(planningParam.previousPlanning.goalValue),
+          new Plan(planningParam.previousPlanning.plan),
+          new DateEpoch(new Date()),
+          planningParam.previousPlanning.description ? new Description(planningParam.previousPlanning.description) : undefined
+        ) : undefined
       )
   
       return {

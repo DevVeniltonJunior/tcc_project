@@ -8,6 +8,7 @@ export namespace TGeneratePlanning {
       goal: string,
       goalValue: number,
       description?: string | null | undefined,
+      previousPlanning?: TPlanning.Entity | null | undefined,
     }
     export type query = object
     }

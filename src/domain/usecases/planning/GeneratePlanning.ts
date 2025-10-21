@@ -13,13 +13,13 @@ export class GeneratePlanning implements IGeneratePlanning {
     private readonly aiService: IAIService
   ) {}
 
-  public async execute(user: User, goal: Goal, goalValue: MoneyValue, description?: Description): Promise<Planning> {
+  public async execute(user: User, goal: Goal, goalValue: MoneyValue, description?: Description, previousPlanning?: Planning): Promise<Planning> {
     const salary = user.getSalary()
     if (!salary) throw new BadRequestError("User does not have a salary")
       
     const userId = user.getId()
     const billsSummary = await this.getBillsSummary.execute(userId)
-    const prompt = this.getPrompt(billsSummary, goal, goalValue, salary, user.getName(), description)
+    const prompt = this.getPrompt(billsSummary, goal, goalValue, salary, user.getName(), description, previousPlanning)
     const outputSchema = this.getOutputSchema()
 
     const result = await this.aiService.generateStructured<Output>(prompt, outputSchema)
@@ -38,13 +38,15 @@ export class GeneratePlanning implements IGeneratePlanning {
     )
   }
 
-  private getPrompt(billsSummary: TBillsSummary, goal: Goal, goalValue: MoneyValue, salary: MoneyValue, name: Name, description?: Description): string {
+  private getPrompt(billsSummary: TBillsSummary, goal: Goal, goalValue: MoneyValue, salary: MoneyValue, name: Name, description?: Description, previousPlanning?: Planning): string {
     return `
     # Financial Planning Agent
     ## Description
     You are a financial expert agent.
     You goal is to analise the user's situation and generate a plan to achieve the goal.
+    ## Context
     You are assisting user named ${name.toString()}.
+    Today is ${new Date().toLocaleDateString()}.
     ## Rules:
     - The plant must to be consice and to the point.
     - The plant must to be realistic and achievable.
@@ -73,6 +75,7 @@ export class GeneratePlanning implements IGeneratePlanning {
       - partialValue3MonthsLater(number): The total amount of the user's bills and expenses to be paid in the next 3 months. This is the amount of the user's bills and expenses to be paid in the next 3 months.
 
     ## analize the situation and generate the plan:
+    ${previousPlanning ? `- You already have a planning for this goal, so you must to analyze the previous planning and regenerate a new plan based on the previous planning and the user's situation. The previous planning is: ${previousPlanning.toJson()}` : ""}
     - Bills summary: ${JSON.stringify(billsSummary)}
     - Goal: ${goal.toString()}
     - Goal value: ${goalValue.toNumber()}
@@ -89,15 +92,15 @@ export class GeneratePlanning implements IGeneratePlanning {
       properties: {
         name: {
           type: "string",
-          description: "Name of the planning"
+          description: "A concise and descriptive name for the planning"
         },
         plan: {
           type: "string",
-          description: "Plan to achieve the goal"
+          description: "A detailed plan to achieve the goal. It must to be a list of steps to achieve the goal. Each step must to be a concise and descriptive step. The plan must to be in the user's language and currency."
         },
         description: {
           type: "string",
-          description: "Description why the plan was generated and how it was relevant to achieve the goal"
+          description: "A concise and descriptive description of the plan. It must to be in the user's language and currency."
         },
       },
       required: ["name", "plan", "description"]

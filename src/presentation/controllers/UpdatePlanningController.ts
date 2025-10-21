@@ -3,7 +3,7 @@ import { Id, Name, MoneyValue, Description, InstallmentsNumber, Goal, Plan } fro
 import { PlanningCommandRepository, PlanningQueryRepository } from '@/infra/repositories'
 import { TUpdatePlanning, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { PlanningDTO } from '@/domain/dtos'
 import { DatabaseException } from '@/infra/exceptions'
@@ -107,10 +107,15 @@ export class UpdatePlanningController {
         data: { error: err.message }
       }
 
-      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "Planning not found")) return {
-              statusCode: 404,
-              data: { error: err.message }
-            }
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
+        statusCode: 404,
+        data: { error: err.message }
+      }
 
       return {
         statusCode: 500,

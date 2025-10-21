@@ -4,7 +4,7 @@ import { Id, Name, DateEpoch, MoneyValue, Description, InstallmentsNumber } from
 import { BillCommandRepository, UserQueryRepository } from '@/infra/repositories'
 import { TCreateBill, TRoute, Response } from '@/presentation/protocols'
 import { validateRequiredFields } from "@/presentation/utils"
-import { BadRequestError, NotFoundError } from '@/presentation/exceptions'
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/presentation/exceptions'
 import { InvalidParam } from '@/domain/exceptions'
 import { DatabaseException } from '@/infra/exceptions'
 
@@ -117,7 +117,12 @@ export class CreateBillController {
         data: { error: err.message }
       }
 
-      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
         statusCode: 404,
         data: { error: err.message }
       }

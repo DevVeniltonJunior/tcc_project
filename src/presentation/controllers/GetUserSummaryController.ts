@@ -1,5 +1,5 @@
 import { TRoute, Response } from "@/presentation/protocols"
-import { BadRequestError, NotFoundError } from "@/presentation/exceptions"
+import { BadRequestError, NotFoundError, UnauthorizedError } from "@/presentation/exceptions"
 import { DatabaseException } from "@/infra/exceptions"
 import { InvalidParam } from "@/domain/exceptions"
 import { Id } from "@/domain/valueObjects"
@@ -70,7 +70,12 @@ export class GetUserSummaryController {
         data: { error: err.message }
       }
 
-      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message === "User not found")) return {
+      if (err instanceof UnauthorizedError) return {
+        statusCode: 401,
+        data: { error: err.message }
+      }
+
+      if (err instanceof NotFoundError || (err instanceof DatabaseException && err.message.includes("not found"))) return {
         statusCode: 404,
         data: { error: err.message }
       }

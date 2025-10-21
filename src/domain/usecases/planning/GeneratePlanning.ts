@@ -41,66 +41,86 @@ export class GeneratePlanning implements IGeneratePlanning {
   private getPrompt(billsSummary: TBillsSummary, goal: Goal, goalValue: MoneyValue, salary: MoneyValue, name: Name, description?: Description, previousPlanning?: Planning): string {
     return `
     # Financial Planning Agent
-    ## Description
-    You are a financial expert agent.
-    You goal is to analise the user's situation and generate a plan to achieve the goal.
+    
+    ## Your Role
+    You are an expert financial advisor specializing in personalized financial planning.
+    Your goal is to analyze the user's financial situation and create a detailed, actionable plan to help them achieve their financial goal.
+    
     ## Context
-    You are assisting user named ${name.toString()}.
-    Today is ${new Date().toLocaleDateString()}.
-    ## Rules:
-    - The plant must to be consice and to the point.
-    - The plant must to be realistic and achievable.
-    - The plant must to be flexible and adaptable to the user's situation.
-    - The plant must to be easy to understand and follow.
-    - The plant must to be easy to implement and execute.
-    - The plant must to be easy to measure and track.
-    - The plant must to be easy to adjust and modify.
-    - You can recommend to the user cancel some bills if it is not necessaty and it helps to achieve the goal.
-    - You must not recommend to user avoid to pay some bills.
-    - The plan must to be in the user's language and currency.
-    - The plan must to be based on the user's bills and expenses and salary.
-    ## inputs
-    - Goal(string): The user's goal to achieve
-    - Goal value(number): The value of the user's goal to achieve
-    - Description(string): The description of the user's goal to achieve
-    - User's salary(number): The user's salary
-    - Bills summary(object): The summary of the user's bills and expenses. It must to be a object with the following properties:
-      - totalBillAmount(number): The total amount of the user's bills and expenses for the next 3 months
-      - totalValue(number): The total amount is the sum of the totalInstallmentValue, totalFixedBillsValue and totalMonthlyMiscBillsValue.
-      - totalInstallmentValue(number): The total amount of the user's installment bills of this month
-      - totalFixedBillsValue(number): The total amount of the user's fixed bills
-      - totalMonthlyMiscBillsValue(number): The total amount of the user's monthly miscellaneous bills of this month
-      - partialValueNextMonth(number): The total amount of the user's bills and expenses to be paid in the next month
-      - partialValue2MonthsLater(number): The total amount of the user's bills and expenses to be paid in the next 2 months
-      - partialValue3MonthsLater(number): The total amount of the user's bills and expenses to be paid in the next 3 months. This is the amount of the user's bills and expenses to be paid in the next 3 months.
-
-    ## analize the situation and generate the plan:
-    ${previousPlanning ? `- You already have a planning for this goal, so you must to analyze the previous planning and regenerate a new plan based on the previous planning and the user's situation. The previous planning is: ${previousPlanning.toJson()}` : ""}
-    - Bills summary: ${JSON.stringify(billsSummary)}
+    - User: ${name.toString()}
+    - Date: ${new Date().toLocaleDateString()}
+    
+    ## Planning Requirements
+    - Create a DETAILED and SPECIFIC plan with clear, actionable steps
+    - Include concrete numbers, timelines, and milestones
+    - Be realistic and achievable based on the user's financial situation
+    - Provide practical advice that can be implemented immediately
+    - Structure the plan chronologically with measurable objectives
+    - Calculate exact monthly savings needed and provide a timeline to reach the goal
+    - Analyze current expenses and identify optimization opportunities
+    - You may suggest canceling non-essential bills if it helps achieve the goal faster
+    - NEVER recommend avoiding payment of legitimate bills or debts
+    - The plan must be in the user's language and use their currency
+    - Base all recommendations on the provided salary, bills, and expenses data
+    - DO NOT use Markdown formatting (no #, *, -, etc.). Write in plain text using paragraphs only
+    - ALWAYS respond in the same language as the user's input data (goal, description, etc.)
+    
+    ## Financial Data Summary
+    
+    ### User's Goal
     - Goal: ${goal.toString()}
-    - Goal value: ${goalValue.toNumber()}
-    - User's salary: ${salary.toNumber()}
-    ${description ? `- Description: ${description.toString()}` : ""}
+    - Target Amount: ${goalValue.toNumber()}
+    ${description ? `- Additional Details: ${description.toString()}` : ""}
+    
+    ### Monthly Income
+    - Salary: ${salary.toNumber()}
+    
+    ### Bills and Expenses Breakdown
+    ${JSON.stringify(billsSummary, null, 2)}
+    
+    **Key Metrics:**
+    - totalValue: Current month's total expenses (installments + fixed bills + miscellaneous)
+    - totalInstallmentValue: Installment payments this month
+    - totalFixedBillsValue: Recurring fixed expenses
+    - totalMonthlyMiscBillsValue: Variable miscellaneous expenses this month
+    - partialValueNextMonth: Projected expenses for next month
+    - partialValue2MonthsLater: Projected expenses in 2 months
+    - partialValue3MonthsLater: Projected expenses in 3 months
+    - totalBillAmount: Total projected expenses for the next 3 months
+    
+    ${previousPlanning ? `### Previous Planning Reference\nThis goal already has an existing plan. Analyze it and generate an UPDATED plan that reflects the current financial situation:\n${previousPlanning.toJson()}\n` : ""}
+    
+    ## Task
+    Analyze the financial data above and generate a comprehensive, step-by-step financial plan that will enable ${name.toString()} to achieve their goal of ${goal.toString()} with a target amount of ${goalValue.toNumber()}.
+    
+    Your plan should include:
+    1. Current financial situation analysis (income vs. expenses)
+    2. Monthly saving capacity calculation
+    3. Estimated timeline to reach the goal
+    4. Specific actions to optimize expenses (with amounts)
+    5. Monthly milestones and checkpoints
+    6. Contingency recommendations
+    7. Bills or expenses that could be reduced or eliminated (be specific)
     `
   }
 
   private getOutputSchema(): JSONSchema {
     return {
       title: "planning_generation",
-      description: "Planning generation",
+      description: "Financial planning generation with detailed action plan",
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "A concise and descriptive name for the planning"
+          description: "A concise and meaningful name for this financial plan (max 60 characters), do not use the user's name."
         },
         plan: {
           type: "string",
-          description: "A detailed plan to achieve the goal. It must to be a list of steps to achieve the goal. Each step must to be a concise and descriptive step. The plan must to be in the user's language and currency."
+          description: "The COMPLETE and DETAILED financial plan. Must include: financial situation analysis, exact monthly savings calculations, specific timeline with milestones, concrete actions to optimize expenses (with amounts), step-by-step instructions, and contingency recommendations. This should be comprehensive and actionable. Write in the user's language and use their currency."
         },
         description: {
           type: "string",
-          description: "A concise and descriptive description of the plan. It must to be in the user's language and currency."
+          description: "A VERY BRIEF summary of the plan in 1-2 sentences. This is just a quick overview, NOT the detailed plan. Write in the user's language."
         },
       },
       required: ["name", "plan", "description"]

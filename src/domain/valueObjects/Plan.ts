@@ -6,7 +6,7 @@ export class Plan {
   }
 
   private isValid(value: string): boolean {
-    if (value.length > 0 && value.length < 3000) {
+    if (value.length > 0 && value.length < 20000) {
       return true
     }
     return false

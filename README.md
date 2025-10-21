@@ -25,28 +25,61 @@ npm install
 
 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência):
+Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência). Abaixo um exemplo completo das variáveis suportadas pelo código:
 
 ```env
-# Environment
+# Ambiente
 PROD=false
+PORT=3000
 
-# Frontend URL (usado quando PROD=true)
+# Frontend URL (usado quando PROD=true e para links de recuperação de senha)
 FRONTEND_URL=http://localhost:5173
 
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+# Banco de Dados (PostgreSQL)
+# Exemplo (compatível com docker-compose incluso):
+# postgresql://root269:sh4432__@localhost:5432/financial_db?schema=public
+DATABASE_URL=
 
 # JWT
-JWT_SECRET=your-secret-key-here
+JWT_SECRET=your-jwt-secret-here
+# Opcional: segredo específico para tokens de recuperação de senha
+JWT_PASSWORD_RESET_SECRET=
+
+# SMTP (necessário para funcionalidades de e-mail: esqueci/redefinir senha)
+SMTP_SERVER=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+
+# Integrações (Axios/OpenRouter)
+AI_KEY=
+# Metadados usados nos headers quando chamando a OpenRouter API
+APP_URL=http://localhost:3000
+APP_NAME=TCC Project
 ```
 
-4. Execute as migrações do banco de dados
+#### Banco de dados com Docker (opcional)
+Se preferir subir um Postgres local rapidamente:
 ```bash
-npm run prisma:apply
+docker-compose up -d postgres
+```
+Em seguida, ajuste a `DATABASE_URL` no `.env` para apontar para o banco acima.
+
+4. Gere o Prisma Client
+```bash
+npm run prisma:generate
 ```
 
-5. Inicie o servidor
+5. Execute as migrações do banco de dados
+```bash
+# Aplica migrações existentes (deploy)
+npm run prisma:apply
+
+# Desenvolvimento: criar uma nova migração (substitua <nome>)
+npm run prisma:migrate <nome>
+```
+
+6. Inicie o servidor
 ```bash
 # Desenvolvimento
 npm run dev
@@ -71,7 +104,7 @@ Para acessar rotas protegidas, inclua o token JWT no header:
 Authorization: Bearer <seu-token-aqui>
 ```
 
-📖 **Documentação completa de autenticação:** [AUTHENTICATION.md](./AUTHENTICATION.md)
+📖 **Documentação de autenticação:** consulte as rotas públicas e protegidas em `http://localhost:3000/api-docs` (Swagger).
 
 ## 🌐 CORS (Cross-Origin Resource Sharing)
 
@@ -110,7 +143,7 @@ const cep = await externalApi.get('https://viacep.com.br/ws/01001000/json/')
 await externalApi.post('https://api.sendgrid.com/v3/mail/send', data)
 ```
 
-📖 **Mais exemplos:** [src/infra/config/axios/examples.ts](./src/infra/config/axios/examples.ts)
+Os clientes `openRouterApi` e `externalApi` são exportados de `src/infra/config/axios/index.ts`.
 
 ## 📚 Documentação da API
 
@@ -127,6 +160,9 @@ npm run test:unit
 
 # Apenas testes de integração
 npm run test:integration
+
+# Todos (unit + integration)
+npm run test:all
 ```
 
 ## 📁 Estrutura do Projeto
@@ -157,5 +193,7 @@ src/
 - `npm run build` - Compila o projeto
 - `npm run run` - Executa o projeto compilado
 - `npm test` - Executa todos os testes
+- `npm run test:all` - Executa unit e integration em sequência
 - `npm run prisma:migrate` - Cria nova migração
+- `npm run prisma:generate` - Gera o Prisma Client
 - `npm run prisma:apply` - Aplica migrações pendentes

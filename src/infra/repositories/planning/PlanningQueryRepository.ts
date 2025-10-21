@@ -40,9 +40,9 @@ export class PlanningQueryRepository implements IPlanningQueryRepository {
       stringFields: ["id", "userId", "name", "description", "goal", "plan"],
       dateFields: ["createdAt", "updatedAt", "deletedAt"],
     })
-    const Plannings = await this._db.findMany({ where: where })
+    const Plannings = await this._db.findMany({ where: where, orderBy: { createdAt: 'desc' } })
 
-    return Plannings.map(Planning => PlanningAdapter.toEntity(Planning))
+    return Plannings.map((Planning: any) => PlanningAdapter.toEntity(Planning))
   }
 
   public async listPaginated(filters?: TFilter<TPlanning.Model>, pagination?: TPagination.Request): Promise<TPagination.Response<Planning>> {
@@ -54,12 +54,21 @@ export class PlanningQueryRepository implements IPlanningQueryRepository {
     const page = pagination?.page || 1
     const limit = pagination?.limit || 10
     const skip = (page - 1) * limit
+    
+    // Build orderBy object
+    const orderBy: any = {}
+    if (pagination?.sortBy) {
+      orderBy[pagination.sortBy] = pagination.order || 'asc'
+    } else {
+      orderBy.createdAt = 'desc' // Default ordering
+    }
 
     const [Plannings, total] = await Promise.all([
       this._db.findMany({ 
         where: where,
         skip: skip,
-        take: limit
+        take: limit,
+        orderBy: orderBy
       }),
       this._db.count({ where: where })
     ])
@@ -67,7 +76,7 @@ export class PlanningQueryRepository implements IPlanningQueryRepository {
     const totalPages = Math.ceil(total / limit)
 
     return {
-      data: Plannings.map(Planning => PlanningAdapter.toEntity(Planning)),
+      data: Plannings.map((Planning: any) => PlanningAdapter.toEntity(Planning)),
       pagination: {
         page,
         limit,

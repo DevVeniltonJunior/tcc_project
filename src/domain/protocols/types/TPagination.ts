@@ -2,6 +2,8 @@ export namespace TPagination {
   export type Request = {
     page?: number
     limit?: number
+    sortBy?: string
+    order?: 'asc' | 'desc'
   }
 
   export type Response<T> = {

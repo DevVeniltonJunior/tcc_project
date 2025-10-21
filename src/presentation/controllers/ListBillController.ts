@@ -88,6 +88,21 @@ export class ListBillController {
    *           format: date-time 
    *           example: "1975-09-25T22:57:22.914Z"
    *         required: false
+   *       - in: query
+   *         name: sortBy
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Field to sort by (e.g., name, value, createdAt)
+   *         example: "createdAt"
+   *       - in: query
+   *         name: order
+   *         schema:
+   *           type: string
+   *           enum: [asc, desc]
+   *         required: false
+   *         description: Sort order (default asc)
+   *         example: "desc"
    *     responses:
    *       200:
    *         description: List Bill with pagination
@@ -163,7 +178,7 @@ export class ListBillController {
    */
   public static async handle(req: TRoute.handleParams<TListBill.Request.body, TListBill.Request.params, TListBill.Request.query>): Promise<Response<TListBill.Response>> {
     try {
-      const { page, limit, ...filters } = req.query
+      const { page, limit, sortBy, order, ...filters } = req.query
       const userId = req.userId
       
       if (!userId) throw new BadRequestError("User ID not found in authentication token")
@@ -202,9 +217,14 @@ export class ListBillController {
           throw new BadRequestError("Query parameter 'limit' must be a positive number")
         }
       }
+      
+      // Validate order parameter
+      if (order && order !== 'asc' && order !== 'desc') {
+        throw new BadRequestError("Query parameter 'order' must be 'asc' or 'desc'")
+      }
 
       const repository = new BillQueryRepository()
-      const result = await repository.listPaginated(filters, { page: pageNumber, limit: limitNumber })
+      const result = await repository.listPaginated(filters, { page: pageNumber, limit: limitNumber, sortBy, order })
   
       return {
         statusCode: 200,

@@ -65,6 +65,21 @@ export class ListUserController {
    *           format: date-time 
    *           example: "1975-09-25T22:57:22.914Z"
    *         required: false
+   *       - in: query
+   *         name: sortBy
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Field to sort by (e.g., name, email, createdAt)
+   *         example: "createdAt"
+   *       - in: query
+   *         name: order
+   *         schema:
+   *           type: string
+   *           enum: [asc, desc]
+   *         required: false
+   *         description: Sort order (default asc)
+   *         example: "desc"
    *     responses:
    *       200:
    *         description: List User
@@ -119,7 +134,7 @@ export class ListUserController {
    */
   public static async handle(req: TRoute.handleParams<TListUser.Request.body, TListUser.Request.params, TListUser.Request.query>): Promise<Response<TListUser.Response>> {
     try {
-      const filters = req.query
+      const { sortBy, order, ...filters } = req.query
       
       if (filters.salary !== undefined) {
         const salary = Number(filters.salary)
@@ -127,10 +142,15 @@ export class ListUserController {
 
         filters.salary = salary
       }
+      
+      // Validate order parameter
+      if (order && order !== 'asc' && order !== 'desc') {
+        throw new BadRequestError("Query parameter 'order' must be 'asc' or 'desc'")
+      }
 
       const findUser = new ListUser(new UserQueryRepository())
 
-      const entity = await findUser.execute(filters)
+      const entity = await findUser.execute(filters, sortBy, order)
   
       return {
         statusCode: 200,
